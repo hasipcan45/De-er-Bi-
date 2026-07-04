@@ -1,0 +1,6 @@
+{
+  "name": "Değer Biç",
+  "description": "Profesyonel gayrimenkul değerleme ve analiz platformu.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

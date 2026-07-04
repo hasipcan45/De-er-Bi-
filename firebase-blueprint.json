@@ -1,0 +1,34 @@
+{
+  "collections": [
+    {
+      "name": "users",
+      "description": "User profiles and subscription data",
+      "fields": [
+        { "name": "fullName", "type": "string" },
+        { "name": "email", "type": "string" },
+        { "name": "phone", "type": "string" },
+        { "name": "role", "type": "string", "description": "'user' or 'admin'" },
+        { "name": "membershipType", "type": "string" },
+        { "name": "createdAt", "type": "number" },
+        { "name": "activeSubscription", "type": "object" }
+      ]
+    },
+    {
+      "name": "requests",
+      "description": "Appraisal reports and requests",
+      "fields": [
+        { "name": "userId", "type": "string" },
+        { "name": "subscriptionId", "type": "string" },
+        { "name": "reportSource", "type": "string" },
+        { "name": "type", "type": "string" },
+        { "name": "status", "type": "string" },
+        { "name": "createdAt", "type": "number" },
+        { "name": "data", "type": "object" },
+        { "name": "contact", "type": "object" },
+        { "name": "photos", "type": "array" },
+        { "name": "paymentStatus", "type": "string" },
+        { "name": "isPaid", "type": "boolean" }
+      ]
+    }
+  ]
+}
