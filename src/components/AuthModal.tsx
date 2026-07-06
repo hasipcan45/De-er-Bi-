@@ -308,7 +308,7 @@ export function AuthModal({ isOpen, onClose, initialMode, onAuthSuccess }: AuthM
                   {mode === 'login' ? 'Tekrar Hoş Geldiniz' : 'Aramıza Katılın'}
                 </h2>
                 <p className="text-gray-500 text-xs mt-0.5">
-                  {mode === 'login' ? 'Bağımsız gayrimenkul değerleme dünyasına adım atın' : 'Raporlarınızı ve mülklerinizi tek panelden yönetin'}
+                  {mode === 'login' ? 'Bağımsız gayrimenkul analiz ve fiyat aralığı dünyasına adım atın' : 'Raporlarınızı ve mülklerinizi tek panelden yönetin'}
                 </p>
               </div>
 
@@ -559,7 +559,7 @@ export function AuthModal({ isOpen, onClose, initialMode, onAuthSuccess }: AuthM
                 
                 <p className="font-semibold text-gray-700">1. Giriş ve Kapsam</p>
                 <p>
-                  Bu Gizlilik Politikası, değerbiç platformu ("Platform", "değerbiç", "biz") tarafından sunulan gayrimenkul değerleme analizi ve imar danışmanlığı hizmetlerinin kullanımı kapsamında kullanıcılardan ("siz", "kullanıcı") toplanan kişisel verilerin işlenmesine ilişkin esasları düzenlemektedir. Bu Politika; 6698 sayılı Kişisel Verilerin Korunması Kanunu (KVKK) ve Kişisel Verileri Koruma Kurulu tarafından yayımlanan ikincil düzenlemeler çerçevesinde hazırlanmıştır. Platform'u kullanarak veya hizmetlerimize başvurarak bu Politika'da belirtilen koşulları kabul etmiş sayılırsınız.
+                  Bu Gizlilik Politikası, değerbiç platformu ("Platform", "değerbiç", "biz") tarafından sunulan gayrimenkul analizi ve imar danışmanlığı hizmetlerinin kullanımı kapsamında kullanıcılardan ("siz", "kullanıcı") toplanan kişisel verilerin işlenmesine ilişkin esasları düzenlemektedir. Bu Politika; 6698 sayılı Kişisel Verilerin Korunması Kanunu (KVKK) ve Kişisel Verileri Koruma Kurulu tarafından yayımlanan ikincil düzenlemeler çerçevesinde hazırlanmıştır. Platform'u kullanarak veya hizmetlerimize başvurarak bu Politika'da belirtilen koşulları kabul etmiş sayılırsınız.
                 </p>
 
                 <p className="font-semibold text-gray-700">2. Veri Sorumlusunun Kimliği</p>
@@ -578,7 +578,7 @@ export function AuthModal({ isOpen, onClose, initialMode, onAuthSuccess }: AuthM
                   <li>E-posta adresi</li>
                 </ul>
 
-                <p><strong>3.2 Hizmet Kapsamında İşlenen Taşınmaz Bilgileri</strong><br />Talep edilen değerleme analizi raporuna konu taşınmazla ilgili kullanıcının beyan ettiği bilgiler işlenmektedir. Bu veriler kişisel veri niteliği taşımamakla birlikte kişiyle ilişkilendirilebildiği ölçüde bu Politika kapsamında değerlendirilir:</p>
+                <p><strong>3.2 Hizmet Kapsamında İşlenen Taşınmaz Bilgileri</strong><br />Talep edilen analiz ve fiyat aralığı raporuna konu taşınmazla ilgili kullanıcının beyan ettiği bilgiler işlenmektedir. Bu veriler kişisel veri niteliği taşımamakla birlikte kişiyle ilişkilendirilebildiği ölçüde bu Politika kapsamında değerlendirilir:</p>
                 <ul className="list-disc pl-4 space-y-1">
                   <li>Taşınmazın il, ilçe, mahalle, ada ve parsel bilgileri</li>
                   <li>Taşınmaz türü (konut, arsa, ticari vb.) ve özellikleri</li>
@@ -605,7 +605,7 @@ export function AuthModal({ isOpen, onClose, initialMode, onAuthSuccess }: AuthM
                 <p>Kişisel verileriniz aşağıdaki amaçlarla ve KVKK'nın 5. maddesi kapsamındaki hukuki dayanaklar esas alınarak işlenmektedir.</p>
                 <p><strong>Sözleşmenin kurulması ve ifası (KVKK m.5/2-c):</strong></p>
                 <ul className="list-disc pl-4 space-y-1">
-                  <li>Hizmet talebinin alınması ve değerleme raporunun hazırlanması</li>
+                  <li>Hizmet talebinin alınması ve analiz raporunun hazırlanması</li>
                   <li>Ödeme süreçlerinin yönetimi (ödeme aracı kurumu üzerinden)</li>
                   <li>Rapor teslimi ve üyelik yönetimi</li>
                 </ul>
@@ -642,7 +642,7 @@ export function AuthModal({ isOpen, onClose, initialMode, onAuthSuccess }: AuthM
                 <p>Kişisel verileriniz, işlenme amacının sona ermesinin ardından KVKK'nın 7. maddesi ve Kişisel Verileri Koruma Kurulu kararları çerçevesinde silinir, yok edilir veya anonim hale getirilir.</p>
                 <ul className="list-disc pl-4 space-y-1">
                   <li>Üyelik verileri: üyeliğin sonlandırılmasından itibaren 3 yıl</li>
-                  <li>Değerleme raporu ve taşınmaz bilgileri: raporun tesliminden itibaren 5 yıl</li>
+                  <li>Analiz raporu ve taşınmaz bilgileri: raporun tesliminden itibaren 5 yıl</li>
                   <li>Ödeme işlem kayıtları: 213 sayılı Vergi Usul Kanunu gereği 5 yıl</li>
                   <li>Teknik ve sistem günlükleri: en fazla 2 yıl</li>
                   <li>Açık rızaya dayalı pazarlama iletişimi: rıza geri alınana kadar, azami 3 yıl</li>
@@ -705,17 +705,17 @@ export function AuthModal({ isOpen, onClose, initialMode, onAuthSuccess }: AuthM
                 <p>Bu Politika'dan doğan uyuşmazlıklarda öncelikle Madde 8'de belirtilen başvuru yolları kullanılacaktır. Çözüme kavuşturulamayan durumlarda Kişisel Verileri Koruma Kurulu ve Türk mahkemeleri yetkilidir. Bu Politika; Türk hukuku ve KVKK hükümleri çerçevesinde yorumlanır.</p>
 
                 <p className="font-semibold text-gray-700">13. Yatırım Tavsiyesi Değildir</p>
-                <p>değerbiç tarafından hazırlanan değerleme analizi raporları ve Platform'da sunulan tüm içerikler; şehir plancıları, mimarlar ve mühendisler tarafından mevcut teknik veriler, emsal araştırmaları ve bölgesel plan kararları esas alınarak hazırlanan uzman görüşü niteliğindedir. Bu raporlar ve içerikler hiçbir koşulda aşağıdaki nitelikleri taşımaz:</p>
+                <p>değerbiç tarafından hazırlanan analiz ve fiyat aralığı raporları ve Platform'da sunulan tüm içerikler; şehir plancıları, mimarlar ve mühendisler tarafından mevcut teknik veriler, emsal araştırmaları ve bölgesel plan kararları esas alınarak hazırlanan uzman görüşü niteliğindedir. Bu raporlar ve içerikler hiçbir koşulda aşağıdaki nitelikleri taşımaz:</p>
                 <ul className="list-disc pl-4 space-y-1">
                   <li>Yatırım tavsiyesi veya yatırım danışmanlığı hizmeti</li>
                   <li>Sermaye Piyasası Kurulu (SPK) lisansı gerektiren finansal analiz veya portföy yönetimi hizmeti</li>
-                  <li>Resmî ekspertiz ya da yasal bağlayıcılığı olan değerleme raporu</li>
-                  <li>Bankacılık veya ipotek süreçlerinde kullanılabilecek biçimsel değerleme belgesi</li>
+                  <li>Resmî ekspertiz ya da yasal bağlayıcılığı olan resmi değer tespiti veya kıymet takdiri raporu</li>
+                  <li>Bankacılık veya ipotek süreçlerinde kullanılabilecek biçimsel resmi kıymet takdir belgesi</li>
                 </ul>
                 <p>Kullanıcı, Platform üzerinden eriştiği analiz, rapor ve bilgileri yalnızca bilgi edinme ve karar destek amacıyla kullanabileceğini; nihai yatırım, alım, satım veya finansman kararından doğan her türlü sonucun münhasıran kendisine ait olduğunu kabul eder. değerbiç; kullanıcının Platform içeriklerine dayanarak verdiği kararlar sonucunda uğrayabileceği doğrudan veya dolaylı zarar, kayıp ya da kâr yoksunluğundan sorumlu tutulamaz.</p>
                 
                 <p className="text-gray-400 text-[10px] pt-2 border-t border-gray-100 text-center">
-                  değerbiç | Gayrimenkul Değerleme Analizi Platformu | degerbic@hotmail.com
+                  değerbiç | Gayrimenkul Analiz Platformu | degerbic@hotmail.com
                 </p>
               </div>
               <div className="pt-3 border-t border-gray-100 flex justify-end">

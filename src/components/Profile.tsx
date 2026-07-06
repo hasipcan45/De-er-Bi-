@@ -51,31 +51,7 @@ export function Profile({ user, requests, onLogout, onDeleteAccount, onUpgrade, 
   
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-
-  const handleReactivateSubscription = () => {
-    onUpdateUser({
-      ...user,
-      cancelAtPeriodEnd: false,
-      subscriptionExpiresAt: undefined
-    });
-    setSuccessMsg("Aboneliğiniz başarıyla yeniden etkinleştirildi.");
-  };
-
-  const handleCancelSubscription = () => {
-    const isYearly = (user.membershipType as string) === 'yearly' || (user.membershipType as string) === 'yearly_pro';
-    const periodMs = isYearly ? 365 * 24 * 60 * 60 * 1000 : 30 * 24 * 60 * 60 * 1000;
-    const expiresAt = user.createdAt + periodMs > Date.now() ? user.createdAt + periodMs : Date.now() + 15 * 24 * 60 * 60 * 1000;
-    
-    onUpdateUser({
-      ...user,
-      cancelAtPeriodEnd: true,
-      subscriptionExpiresAt: expiresAt
-    });
-    setShowCancelConfirm(false);
-    setSuccessMsg("Aboneliğiniz iptal edildi. Dönem sonuna kadar haklarınızı kullanabilirsiniz.");
-  };
 
   // Report download states are not needed as we directly trigger a file download
 
@@ -175,7 +151,7 @@ export function Profile({ user, requests, onLogout, onDeleteAccount, onUpgrade, 
     if (req.pdfUrl && req.pdfUrl.startsWith('data:')) {
       const link = document.createElement('a');
       link.href = req.pdfUrl;
-      link.download = req.pdfName || `Degerleme_Raporu_${req.id}.pdf`;
+      link.download = req.pdfName || `Gayrimenkul_Analiz_Raporu_${req.id}.pdf`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -400,10 +376,10 @@ export function Profile({ user, requests, onLogout, onDeleteAccount, onUpgrade, 
   <div class="container">
     <div class="header">
       <div class="logo">Değer Biç™</div>
-      <div class="badge">RESMİ OLMAYAN GAYRİMENKUL RAPORU</div>
+      <div class="badge">RESMİ OLMAYAN GAYRİMENKUL ANALİZ RAPORU</div>
     </div>
 
-    <h1>Gayrimenkul Değerleme ve Analiz Raporu</h1>
+    <h1>Gayrimenkul Analiz ve Fiyat Aralığı Raporu</h1>
     <p style="font-size: 12px; color: #64748b; margin-top: 0; margin-bottom: 30px;">
       Bu rapor, mülkün bölgedeki emsal kiralık/satılık veri tabanları temel alınarak Değer Biç algoritması ile üretilmiştir.
     </p>
@@ -420,16 +396,16 @@ export function Profile({ user, requests, onLogout, onDeleteAccount, onUpgrade, 
     </div>
 
     <div class="price-section">
-      <div class="price-label">TAHMİNİ PİYASA DEĞERİ</div>
+      <div class="price-label">ÖNGÖRÜLEN PİYASA FİYATI</div>
       <div class="price-value">${details.estimatedValue.toLocaleString('tr-TR')} ₺</div>
       <div class="price-range">
-        Güven Aralığı Payı (±9%): <strong>${details.minEstimatedValue.toLocaleString('tr-TR')} ₺</strong> - <strong>${details.maxEstimatedValue.toLocaleString('tr-TR')} ₺</strong>
+        Piyasa Fiyat Aralığı (±9%): <strong>${details.minEstimatedValue.toLocaleString('tr-TR')} ₺</strong> - <strong>${details.maxEstimatedValue.toLocaleString('tr-TR')} ₺</strong>
       </div>
     </div>
 
     <div class="rent-section">
       <div class="rent-block">
-        <div class="meta-card-title">ORTALAMA M² BİRİM DEĞERİ</div>
+        <div class="meta-card-title">ORTALAMA M² BİRİM FİYATI</div>
         <div class="meta-card-value" style="font-size: 18px; color: #1a5c3a; margin-top: 5px;">
            ${details.avgSqmPrice.toLocaleString('tr-TR')} ₺ / m²
         </div>
@@ -490,7 +466,7 @@ export function Profile({ user, requests, onLogout, onDeleteAccount, onUpgrade, 
       </tbody>
     </table>
 
-    <div class="table-title">🌟 TAŞINMAZIN BAŞLICA DEĞER AVANTAJLARI</div>
+    <div class="table-title">🌟 TAŞINMAZIN BAŞLICA ÖNE ÇIKAN AVANTAJLARI</div>
     <div class="feature-list">
       ${details.topFeatures.map(f => `
         <div class="feature-item">
@@ -514,7 +490,7 @@ export function Profile({ user, requests, onLogout, onDeleteAccount, onUpgrade, 
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `Degerleme_Raporu_${req.id}.html`;
+    link.download = `Gayrimenkul_Analiz_Raporu_${req.id}.html`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -552,7 +528,7 @@ export function Profile({ user, requests, onLogout, onDeleteAccount, onUpgrade, 
                 active={activeTab === 'reports'} 
                 onClick={() => setActiveTab('reports')} 
                 icon={<FileText className="w-3.5 h-3.5 md:w-4 md:h-4" />} 
-                label="Değerleme Raporlarım" 
+                label="Analiz Raporlarım" 
               />
             </nav>
 
@@ -630,230 +606,7 @@ export function Profile({ user, requests, onLogout, onDeleteAccount, onUpgrade, 
                   )}
                 </AnimatePresence>
                 
-                {/* Membership Upgrade Showcase card */}
-                {user.membershipType === 'free' ? (
-                  <div className="bg-[#e8f5ee] border border-[#b3d9c5] rounded-2xl md:rounded-3xl p-4 md:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                    <div className="space-y-1">
-                      <span className="text-[8px] md:text-[9px] font-black text-[#1a5c3a]/60 tracking-widest block">AKTİF LİSANS PAKETİNİZ</span>
-                      <p className="font-extrabold text-[#1a5c3a] text-xs md:text-base flex items-center gap-1.5 md:gap-2">
-                         <Award className="w-4 h-4 md:w-[18px] md:h-[18px]" />
-                         Aboneliksiz Standart Üyelik
-                      </p>
-                      <p className="text-[10px] text-gray-500">Mekânsal kentsel raporlar ve piyasa değer analizleri dahil.</p>
-                    </div>
-                    <div className="flex items-center gap-2 w-full sm:w-auto">
-                      <span className="px-2.5 py-1 md:px-3 md:py-1.5 bg-[#1a5c3a] text-white text-[8px] md:text-[9px] font-black rounded-full uppercase tracking-wider">AKTİF</span>
-                      <button 
-                        onClick={onUpgrade} 
-                        className="flex-1 sm:flex-none px-3 py-2 md:px-4 md:py-2 bg-[#f0a500] text-gray-950 rounded-lg md:rounded-xl text-[11px] md:text-xs font-extrabold hover:bg-[#d99400] transition-colors shadow-sm cursor-pointer"
-                      >
-                        Paket Seç
-                      </button>
-                    </div>
-                  </div>
-                ) : user.cancelAtPeriodEnd ? (
-                  <div className="bg-amber-50 border border-amber-200 rounded-2xl md:rounded-3xl p-4 md:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                    <div className="space-y-1.5 max-w-xl text-left">
-                      <span className="text-[8px] md:text-[9px] font-black text-amber-800/60 tracking-widest block">ABONELİK DURUMU</span>
-                      <p className="font-extrabold text-amber-800 text-xs md:text-base flex items-center gap-1.5 md:gap-2">
-                         <Award className="w-4 h-4 md:w-[18px] md:h-[18px]" />
-                         {((user.membershipType as string) === 'monthly' || (user.membershipType as string) === 'monthly_pro') ? 'Profesyonel Aylık Abonelik (İptal Edildi)' : 'Profesyonel Yıllık Paket (İptal Edildi)'}
-                      </p>
-                      <p className="text-[10px] text-amber-700 leading-relaxed">
-                        Aboneliğiniz iptal edilmiştir. Mevcut dönemin sonu olan <strong>{new Date(user.subscriptionExpiresAt || 0).toLocaleDateString('tr-TR')}</strong> tarihine kadar kotalarınızı ve profesyonel haklarınızı kullanmaya devam edebilirsiniz. Bu tarihten sonra hesabınız standart ücretsiz üyeliğe aktarılacaktır.
-                      </p>
-                    </div>
-                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto shrink-0">
-                      <span className="px-2.5 py-1 md:px-3 md:py-1.5 bg-amber-600 text-white text-[8px] md:text-[9px] font-black rounded-full uppercase tracking-wider text-center">
-                        İPTAL BEKLİYOR
-                      </span>
-                      <button 
-                        onClick={handleReactivateSubscription}
-                        className="px-3 py-2 md:px-4 md:py-2 bg-[#1a5c3a] text-white rounded-lg md:rounded-xl text-[11px] md:text-xs font-extrabold hover:bg-[#207047] transition-colors shadow-sm cursor-pointer whitespace-nowrap"
-                      >
-                        Aboneliği Devam Ettir
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="bg-[#e8f5ee] border border-[#b3d9c5] rounded-2xl md:rounded-3xl p-4 md:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                    <div className="space-y-1 text-left">
-                      <span className="text-[8px] md:text-[9px] font-black text-[#1a5c3a]/60 tracking-widest block">AKTİF LİSANS PAKETİNİZ</span>
-                      <p className="font-extrabold text-[#1a5c3a] text-xs md:text-base flex items-center gap-1.5 md:gap-2">
-                         <Award className="w-4 h-4 md:w-[18px] md:h-[18px]" />
-                         {((user.membershipType as string) === 'monthly' || (user.membershipType as string) === 'monthly_pro') ? 'Profesyonel Aylık Abonelik' : 'Profesyonel Yıllık Paket'}
-                      </p>
-                      <p className="text-[10px] text-gray-500">Mekânsal kentsel raporlar ve piyasa değer analizleri dahil.</p>
-                    </div>
-                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto shrink-0">
-                      <span className="px-2.5 py-1 md:px-3 md:py-1.5 bg-[#1a5c3a] text-white text-[8px] md:text-[9px] font-black rounded-full uppercase tracking-wider text-center">
-                        AKTİF
-                      </span>
-                      <button 
-                        onClick={onUpgrade} 
-                        className="px-3 py-2 md:px-4 md:py-2 bg-[#f0a500] text-gray-950 rounded-lg md:rounded-xl text-[11px] md:text-xs font-extrabold hover:bg-[#d99400] transition-colors shadow-sm cursor-pointer whitespace-nowrap"
-                      >
-                        Paket Değiştir
-                      </button>
-                      <button 
-                        type="button"
-                        onClick={() => setShowCancelConfirm(true)}
-                        className="px-3 py-2 md:px-4 md:py-2 bg-red-50 text-red-700 hover:bg-red-100 border border-red-200 rounded-lg md:rounded-xl text-[11px] md:text-xs font-bold transition-colors cursor-pointer whitespace-nowrap"
-                      >
-                        Aboneliği İptal Et
-                      </button>
-                    </div>
-                  </div>
-                )}
 
-                {/* Usage Quotas Section */}
-                {(() => {
-                  const activeSubId = user.activeSubscription?.subscriptionId;
-                  const activeSubReports = activeSubId ? requests.filter(r => r.subscriptionId === activeSubId) : [];
-                  
-                  const konutUsed = activeSubReports.filter(r => r.type === 'konut').length;
-                  const arsaUsed = activeSubReports.filter(r => r.type === 'arsa').length;
-                  const ticariUsed = activeSubReports.filter(r => r.type === 'ticari').length;
-
-                  const getLimits = () => {
-                    if (user.activeSubscription) {
-                      const quota = user.activeSubscription.quota || { konut: 0, arsa: 0, ticari: 0 };
-                      return {
-                        konut: quota.konut || 0,
-                        arsa: quota.arsa || 0,
-                        ticari: quota.ticari || 0,
-                        total: (quota.konut || 0) + (quota.arsa || 0) + (quota.ticari || 0)
-                      };
-                    }
-                    
-                    const extraKonut = user?.extraQuotaKonut || 0;
-                    const extraArsa = user?.extraQuotaArsa || 0;
-                    const extraTicari = user?.extraQuotaTicari || 0;
-                    return {
-                      konut: extraKonut,
-                      arsa: extraArsa,
-                      ticari: extraTicari,
-                      total: extraKonut + extraArsa + extraTicari
-                    };
-                  };
-
-                  const limits = getLimits();
-                  const effectiveMem = getEffectiveMembership(user);
-                  const hasActiveSub = !!user.activeSubscription;
-                  const hasExtraQuotas = !!(user?.extraQuotaKonut || user?.extraQuotaArsa || user?.extraQuotaTicari);
-
-                  if (!hasActiveSub && !hasExtraQuotas) {
-                    return (
-                      <div className="bg-white border border-gray-200 rounded-2xl md:rounded-3xl p-4 md:p-6 shadow-xs space-y-4">
-                        <div className="flex items-center justify-between border-b border-gray-100 pb-3">
-                          <div className="space-y-0.5">
-                            <h4 className="text-xs md:text-sm font-bold text-gray-800 flex items-center gap-1.5">
-                              <Award className="w-4 h-4 text-gray-400" />
-                              Kullanım Kotaları ve Haklar
-                            </h4>
-                            <p className="text-[10px] text-gray-400">Ücretsiz üyelikte rapor hakkınız bulunmaz. Tekil alım yapabilirsiniz.</p>
-                          </div>
-                        </div>
-                        <div className="bg-gray-50 border border-dashed border-gray-200 rounded-xl p-4 text-center space-y-2">
-                          <p className="text-xs font-semibold text-gray-600">Herhangi bir aboneliğiniz bulunmamaktadır.</p>
-                          <p className="text-[10px] text-gray-400">Aylık veya Yıllık Profesyonel Paketlere üye olarak yüksek miktarda tasarruf edin ve raporlama haklarınızı hemen kullanmaya başlayın.</p>
-                          <button 
-                            type="button"
-                            onClick={onUpgrade}
-                            className="px-4 py-2 bg-[#1a5c3a] hover:bg-[#207047] text-white text-[11px] font-bold rounded-lg transition-colors cursor-pointer mt-1"
-                          >
-                            Abonelik Paketlerini İncele
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  }
-
-                  return (
-                    <div className="bg-white border border-gray-200 rounded-2xl md:rounded-3xl p-3 md:p-6 shadow-xs space-y-3 md:space-y-4">
-                      <div className="flex items-center justify-between border-b border-gray-100 pb-2.5 md:pb-3 gap-2">
-                        <div className="space-y-0.5">
-                          <h4 className="text-[11px] md:text-sm font-bold text-gray-800 flex items-center gap-1.5">
-                            <Award className="w-3.5 h-3.5 md:w-4 md:h-4 text-[#1a5c3a] shrink-0" />
-                            Paket Kullanım Kotaları
-                          </h4>
-                          <p className="text-[9px] md:text-[10px] text-gray-400 hidden sm:block">Mevcut abonelik dönemi için tanımlanan mülk analiz limitleri.</p>
-                        </div>
-                        <span className="text-[9px] md:text-[10px] bg-[#1a5c3a]/15 text-[#1a5c3a] font-black px-2 md:px-2.5 py-0.5 md:py-1 rounded-full tracking-wider shrink-0">
-                          TOPLAM: {konutUsed + arsaUsed + ticariUsed}/{limits.total}
-                        </span>
-                      </div>
-
-                      <div className="grid grid-cols-3 gap-1.5 md:gap-4">
-                        {/* Konut Quota Card */}
-                        <div className="bg-gray-50 border border-gray-150 rounded-lg md:rounded-xl p-2 md:p-3.5 flex flex-col justify-between min-h-[90px] md:min-h-auto space-y-2 md:space-y-3">
-                          <div className="flex flex-col md:flex-row md:items-center justify-between gap-0.5 md:gap-2">
-                            <div className="flex items-center gap-1 md:gap-2">
-                              <div className="p-1 md:p-1.5 bg-blue-50 text-blue-700 border border-blue-100 rounded-md md:rounded-lg shrink-0">
-                                <Grid className="w-3 md:w-4 h-3 md:h-4" />
-                              </div>
-                              <span className="text-[9px] md:text-xs font-bold text-gray-700 truncate">Konut</span>
-                            </div>
-                            <span className="text-[10px] md:text-xs font-black text-gray-900">{konutUsed}/{limits.konut}</span>
-                          </div>
-                          <div className="space-y-1">
-                            <div className="w-full bg-gray-200 h-1 md:h-2 rounded-full overflow-hidden">
-                              <div 
-                                className="bg-blue-600 h-full rounded-full transition-all duration-500" 
-                                style={{ width: `${Math.min(100, limits.konut > 0 ? (konutUsed / limits.konut) * 100 : 0)}%` }}
-                              />
-                            </div>
-                            <p className="text-[8px] md:text-[10px] text-gray-400 font-bold md:font-medium text-right leading-none">Kalan: {Math.max(0, limits.konut - konutUsed)}</p>
-                          </div>
-                        </div>
-
-                        {/* Arsa Quota Card */}
-                        <div className="bg-gray-50 border border-gray-150 rounded-lg md:rounded-xl p-2 md:p-3.5 flex flex-col justify-between min-h-[90px] md:min-h-auto space-y-2 md:space-y-3">
-                          <div className="flex flex-col md:flex-row md:items-center justify-between gap-0.5 md:gap-2">
-                            <div className="flex items-center gap-1 md:gap-2">
-                              <div className="p-1 md:p-1.5 bg-emerald-50 text-emerald-700 border border-emerald-100 rounded-md md:rounded-lg shrink-0">
-                                <Map className="w-3 md:w-4 h-3 md:h-4" />
-                              </div>
-                              <span className="text-[9px] md:text-xs font-bold text-gray-700 truncate">Arsa</span>
-                            </div>
-                            <span className="text-[10px] md:text-xs font-black text-gray-900">{arsaUsed}/{limits.arsa}</span>
-                          </div>
-                          <div className="space-y-1">
-                            <div className="w-full bg-gray-200 h-1 md:h-2 rounded-full overflow-hidden">
-                              <div 
-                                className="bg-emerald-600 h-full rounded-full transition-all duration-500" 
-                                style={{ width: `${Math.min(100, limits.arsa > 0 ? (arsaUsed / limits.arsa) * 100 : 0)}%` }}
-                              />
-                            </div>
-                            <p className="text-[8px] md:text-[10px] text-gray-400 font-bold md:font-medium text-right leading-none">Kalan: {Math.max(0, limits.arsa - arsaUsed)}</p>
-                          </div>
-                        </div>
-
-                        {/* Ticari Quota Card */}
-                        <div className="bg-gray-50 border border-gray-150 rounded-lg md:rounded-xl p-2 md:p-3.5 flex flex-col justify-between min-h-[90px] md:min-h-auto space-y-2 md:space-y-3">
-                          <div className="flex flex-col md:flex-row md:items-center justify-between gap-0.5 md:gap-2">
-                            <div className="flex items-center gap-1 md:gap-2">
-                              <div className="p-1 md:p-1.5 bg-purple-50 text-purple-700 border border-purple-100 rounded-md md:rounded-lg shrink-0">
-                                <Building2 className="w-3 md:w-4 h-3 md:h-4" />
-                              </div>
-                              <span className="text-[9px] md:text-xs font-bold text-gray-700 truncate">Ticari</span>
-                            </div>
-                            <span className="text-[10px] md:text-xs font-black text-gray-900">{ticariUsed}/{limits.ticari}</span>
-                          </div>
-                          <div className="space-y-1">
-                            <div className="w-full bg-gray-200 h-1 md:h-2 rounded-full overflow-hidden">
-                              <div 
-                                className="bg-purple-600 h-full rounded-full transition-all duration-500" 
-                                style={{ width: `${Math.min(100, limits.ticari > 0 ? (ticariUsed / limits.ticari) * 100 : 0)}%` }}
-                              />
-                            </div>
-                            <p className="text-[8px] md:text-[10px] text-gray-400 font-bold md:font-medium text-right leading-none">Kalan: {Math.max(0, limits.ticari - ticariUsed)}</p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })()}
 
                 {/* Main Read / Edit Profile Fields Panel */}
                 <form onSubmit={handleSaveProfile} className="space-y-6">
@@ -1043,7 +796,7 @@ export function Profile({ user, requests, onLogout, onDeleteAccount, onUpgrade, 
               >
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-gray-100 pb-4 gap-3">
                   <div className="flex items-center gap-3">
-                    <h3 className="text-lg font-black text-gray-950 tracking-tight">Değerleme Raporlarım</h3>
+                    <h3 className="text-lg font-black text-gray-950 tracking-tight">Analiz Raporlarım</h3>
                     <span className="text-[10px] font-black bg-[#1a5c3a]/10 text-[#1a5c3a] px-2.5 py-1 rounded-full tracking-wider">
                       TOPLAM {requests.length} RAPOR
                     </span>
@@ -1055,8 +808,8 @@ export function Profile({ user, requests, onLogout, onDeleteAccount, onUpgrade, 
                     <div className="w-10 h-10 md:w-12 md:h-12 bg-gray-100 rounded-full flex items-center justify-center text-gray-400 mx-auto mb-3 border border-gray-200/50">
                       <FileText size={18} />
                     </div>
-                    <p className="text-xs text-gray-500 font-bold">Henüz oluşturulmuş bir değerleme raporunuz bulunmamaktadır.</p>
-                    <p className="text-[10px] text-gray-400 mt-1">Ana sayfadaki değer biçme formunu kullanarak ilk talebinizi oluşturabilirsiniz.</p>
+                    <p className="text-xs text-gray-500 font-bold">Henüz oluşturulmuş bir analiz raporunuz bulunmamaktadır.</p>
+                    <p className="text-[10px] text-gray-400 mt-1">Ana sayfadaki analiz talep formunu kullanarak ilk talebinizi oluşturabilirsiniz.</p>
                   </div>
                 ) : (
                   <>
@@ -1155,68 +908,7 @@ export function Profile({ user, requests, onLogout, onDeleteAccount, onUpgrade, 
 
       </div>
 
-      {/* Cancel Subscription Confirmation Modal */}
-      <AnimatePresence>
-        {showCancelConfirm && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            {/* Backdrop */}
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setShowCancelConfirm(false)}
-              className="absolute inset-0 bg-black/60 backdrop-blur-xs"
-            />
-            
-            {/* Modal Card */}
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.95, y: 15 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 15 }}
-              className="relative bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl border border-gray-100 z-10 text-left space-y-4"
-            >
-              <div className="flex items-center gap-3 text-red-600">
-                <div className="p-3 bg-red-50 rounded-2xl border border-red-100 shrink-0">
-                  <X size={20} className="text-red-600" />
-                </div>
-                <div>
-                  <h3 className="font-extrabold text-sm md:text-base text-gray-900 leading-tight">Aboneliğinizi İptal Etmek İstiyor musunuz?</h3>
-                  <p className="text-[10px] text-gray-400 font-semibold">Abonelik dönem sonunda yenilenmeyecektir.</p>
-                </div>
-              </div>
-              
-              <div className="space-y-3 text-xs text-gray-600 leading-relaxed bg-gray-50 p-4 rounded-2xl border border-gray-100">
-                <p>
-                  Aboneliğinizi iptal etseniz dahi, mevcut kullanım döneminizin sonu olan <strong>{new Date(user.createdAt + (user.membershipType === 'yearly' ? 365 : 30) * 24 * 60 * 60 * 1000).toLocaleDateString('tr-TR')}</strong> tarihine kadar tüm kalan kotalarınızı ve profesyonel haklarınızı kullanmaya devam edebileceksiniz.
-                </p>
-                <p className="font-bold text-gray-800">İptal işleminden sonra:</p>
-                <ul className="list-disc pl-4 space-y-1 text-[11px] text-gray-500">
-                  <li>Gelecek dönem için yeni fatura kesilmeyecektir.</li>
-                  <li>Dönem sonunda haklarınız sıfırlanacak ve standart ücretsiz üyeliğe geçiş yapılacaktır.</li>
-                  <li>Dilediğiniz zaman aboneliğinizi profilinizden tek tıkla tekrar aktif hale getirebilirsiniz.</li>
-                </ul>
-              </div>
-              
-              <div className="flex gap-2 pt-1">
-                <button 
-                  type="button"
-                  onClick={() => setShowCancelConfirm(false)}
-                  className="flex-1 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-xl text-xs transition-colors cursor-pointer text-center"
-                >
-                  Vazgeç, Paketi Tut
-                </button>
-                <button 
-                  type="button"
-                  onClick={handleCancelSubscription}
-                  className="flex-1 py-3 bg-red-600 hover:bg-red-700 text-white font-extrabold rounded-xl text-xs transition-colors cursor-pointer text-center"
-                >
-                  Evet, İptal Et
-                </button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+
 
     </div>
   );

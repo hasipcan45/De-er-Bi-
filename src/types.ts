@@ -51,6 +51,8 @@ export interface AppraisalRequest {
   status: ReportStatus;
   createdAt: number;
   userMembership?: 'guest' | 'free' | 'monthly' | 'yearly';
+  selectedPackage?: 'Basit' | 'Orta' | 'Profesyonel';
+  packagePrice?: number;
   data: {
     city: string;
     district: string;

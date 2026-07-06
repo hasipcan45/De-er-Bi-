@@ -28,9 +28,9 @@ export function Services() {
   // Report details text content matching requested exact copy
   const reportCategories = {
     konut: {
-      title: 'Konut Değerleme Raporu',
-      subtitle: 'Konutunuzu Kentsel Çevresiyle Birlikte Değerlendirin',
-      description: 'Bir konutun değeri yalnızca metrekaresi veya fiziksel özellikleriyle açıklanamaz. Mahallenin gelişim düzeyi, ulaşım olanakları, sosyal donatı kapasitesi, çevresel kalite ve bölgesel dinamikler de konutun değer algısını doğrudan etkiler. Değer Biç Konut Değerleme Raporu, taşınmazınızı bulunduğu kentsel sistem içerisinde değerlendirerek kapsamlı analizler sunar.',
+      title: 'Konut Analiz ve Fiyat Aralığı Raporu',
+      subtitle: 'Konutunuzu Kentsel Çevresiyle Birlikte Analiz Edin',
+      description: 'Bir konutun değeri yalnızca metrekaresi veya fiziksel özellikleriyle açıklanamaz. Mahallenin gelişim düzeyi, ulaşım olanakları, sosyal donatı kapasitesi, çevresel kalite ve bölgesel dinamikler de konutun olması gereken fiyatını ve pazar potansiyelini doğrudan etkiler. Değer Biç Konut Analiz Raporu, taşınmazınızı bulunduğu kentsel sistem içerisinde analiz ederek kapsamlı piyasa fiyat aralığı tespiti ve analizleri sunar.',
       icon: <Building2 className="w-5 h-5 text-emerald-600" />,
       colorTheme: 'from-emerald-50 to-white border-emerald-100',
       activeColor: 'bg-[#1a5c3a] text-white',
@@ -41,25 +41,25 @@ export function Services() {
           items: [
             'Konumsal analiz',
             'Mekânsal erişilebilirlik analizi',
-            'Toplu taşıma erişilebilirliği değerlendirmesi',
+            'Toplu taşıma erişilebilirliği analizi',
             'Karayolu bağlantıları incelemesi',
             'Mahalle ve yakın çevre karakter analizi',
-            'Sosyal donatı alanları yeterlilik değerlendirmesi',
+            'Sosyal donatı alanları yeterlilik analizi',
             'Eğitim tesisleri erişim analizi',
             'Sağlık tesisleri erişim analizi',
             'Yeşil alan ve rekreasyon alanları analizi',
-            'Kentsel hizmetlere erişim değerlendirmesi'
+            'Kentsel hizmetlere erişim analizi'
           ]
         },
         {
           title: 'Sosyo-Ekonomik Analizler',
           iconName: 'socio',
           items: [
-            'Mahalle profili değerlendirmesi',
+            'Mahalle profili analizi',
             'Demografik yapı analizi',
             'Nüfus gelişim eğilimleri',
             'Bölgesel gelişmişlik göstergeleri incelemesi',
-            'Sosyal yapı değerlendirmesi'
+            'Sosyal yapı analizi'
           ]
         },
         {
@@ -69,8 +69,8 @@ export function Services() {
             'Emsal satış incelemeleri',
             'Emsal kira incelemeleri',
             'Bölgesel fiyat eğilimleri analizi',
-            'Gayrimenkul piyasası değerlendirmesi',
-            'Piyasa değer göstergelerinin yorumlanması'
+            'Gayrimenkul piyasası analizi',
+            'Piyasa fiyat göstergelerinin ve olması gereken fiyat aralıklarının yorumlanması'
           ]
         },
         {
@@ -78,19 +78,19 @@ export function Services() {
           iconName: 'planning',
           items: [
             'Üst ölçek plan kararlarının incelenmesi',
-            'Bölgesel gelişim eğilimleri değerlendirmesi',
+            'Bölgesel gelişim eğilimleri analizi',
             'Kamu yatırımları incelemesi',
-            'Yakın çevredeki önemli projelerin değerlendirilmesi',
+            'Yakın çevredeki önemli projelerin analizi',
             'Kentsel dönüşüm ve yenileme alanları incelemesi',
-            'Genel değerlendirme ve sonuç analizi'
+            'Genel sentez ve sonuç analizi'
           ]
         }
       ]
     },
     arsa: {
-      title: 'Arsa Değerleme Raporu',
+      title: 'Arsa Analiz ve Fiyat Aralığı Raporu',
       subtitle: 'Arsanızın Mekânsal Özelliklerini ve Planlama Potansiyelini İnceleyin',
-      description: 'Arsalar, bulundukları bölgenin planlama kararlarından ve gelişim süreçlerinden doğrudan etkilenen taşınmazlardır. Bu nedenle değerlendirme sürecinde yalnızca mevcut durum değil, çevresel, mekânsal ve planlama temelli faktörler de dikkate alınmalıdır. Değer Biç Arsa Değerleme Raporu, arsanızın bulunduğu çevreyi çok yönlü olarak analiz ederek kapsamlı değerlendirmeler sunar.',
+      description: 'Arsalar, bulundukları bölgenin planlama kararlarından ve gelişim süreçlerinden doğrudan etkilenen taşınmazlardır. Bu nedenle analiz sürecinde yalnızca mevcut durum değil, çevresel, mekânsal ve planlama temelli faktörler de dikkate alınmalıdır. Değer Biç Arsa Analiz Raporu, arsanızın bulunduğu çevreyi çok yönlü olarak inceleyerek kapsamlı analizler ve fiyat aralığı tespiti sunar.',
       icon: <Map className="w-5 h-5 text-amber-600" />,
       colorTheme: 'from-amber-50 to-white border-amber-100',
       activeColor: 'bg-[#f0a500] text-gray-950',
@@ -102,10 +102,10 @@ export function Services() {
             'Çevre Düzeni Planı incelemesi',
             'Nazım İmar Planı incelemesi',
             'Uygulama İmar Planı incelemesi',
-            'Plan notları değerlendirmesi',
+            'Plan notları analizi',
             'Arazi kullanım kararları analizi',
             'Mekânsal gelişme kararlarının incelenmesi',
-            'Planlama kısıtları ve hükümlerinin değerlendirilmesi'
+            'Planlama kısıtları ve hükümlerinin analizi'
           ]
         },
         {
@@ -114,10 +114,10 @@ export function Services() {
           items: [
             'Konumsal analiz',
             'Ulaşım erişilebilirliği analizi',
-            'Ana ulaşım akslarına yakınlık değerlendirmesi',
+            'Ana ulaşım akslarına yakınlık analizi',
             'Yerleşim alanlarıyla ilişkilerin incelenmesi',
-            'Ticaret ve hizmet alanlarına erişim değerlendirmesi',
-            'Altyapı olanakları değerlendirmesi',
+            'Ticaret ve hizmet alanlarına erişim analizi',
+            'Altyapı olanakları analizi',
             'Yakın çevre kullanım deseni analizi'
           ]
         },
@@ -126,10 +126,10 @@ export function Services() {
           iconName: 'environmental',
           items: [
             'Topografik yapı incelemesi',
-            'Doğal eşikler değerlendirmesi',
+            'Doğal eşikler analizi',
             'Çevresel risk analizi',
             'Koruma alanları incelemesi',
-            'Jeolojik ve çevresel kısıtlılıkların değerlendirilmesi',
+            'Jeolojik ve çevresel kısıtlılıkların analizi',
             'Çevresel hassasiyet analizi'
           ]
         },
@@ -138,9 +138,9 @@ export function Services() {
           iconName: 'market',
           items: [
             'Emsal arsa incelemeleri',
-            'Bölgesel piyasa göstergeleri değerlendirmesi',
+            'Bölgesel piyasa göstergeleri analizi',
             'Arsa piyasası eğilimleri analizi',
-            'Piyasa değer göstergelerinin yorumlanması'
+            'Piyasa fiyat göstergelerinin ve olması gereken fiyat aralıklarının yorumlanması'
           ]
         },
         {
@@ -148,19 +148,19 @@ export function Services() {
           iconName: 'regional',
           items: [
             'Bölgesel gelişim eğilimleri incelemesi',
-            'Kamu yatırımları değerlendirmesi',
+            'Kamu yatırımları analizi',
             'Ulaşım projelerinin incelenmesi',
             'Kentsel büyüme koridorları analizi',
-            'Yakın çevredeki önemli projelerin değerlendirilmesi',
-            'Genel değerlendirme ve sonuç analizi'
+            'Yakın çevredeki önemli projelerin analizi',
+            'Genel sentez ve sonuç analizi'
           ]
         }
       ]
     },
     ticari: {
-      title: 'Ticari Gayrimenkul Değerleme Raporu',
+      title: 'Ticari Gayrimenkul Analiz ve Fiyat Aralığı Raporu',
       subtitle: 'Ticari Taşınmazınızı Bölgesel Dinamiklerle Birlikte Analiz Edin',
-      description: 'Ticari gayrimenkullerin değeri; erişilebilirlik, görünürlük, ticari hareketlilik, kullanıcı yoğunluğu ve bölgesel ekonomik yapı gibi birçok faktörün birleşimiyle oluşur. Değer Biç Ticari Gayrimenkul Değerleme Raporu, ticari taşınmazları yalnızca fiziksel özellikleri üzerinden değil, bulundukları ticari ekosistem içerisinde değerlendirir.',
+      description: 'Ticari gayrimenkullerin değeri; erişilebilirlik, görünürlük, ticari hareketlilik, kullanıcı yoğunluğu ve bölgesel ekonomik yapı gibi birçok faktörün birleşimiyle oluşur. Değer Biç Ticari Gayrimenkul Analiz Raporu, ticari taşınmazları yalnızca fiziksel özellikleri üzerinden değil, bulundukları ticari ekosistem içerisinde analiz ederek piyasa fiyat aralığını tespit eder.',
       icon: <Layers className="w-5 h-5 text-indigo-600" />,
       colorTheme: 'from-indigo-50 to-white border-indigo-100',
       activeColor: 'bg-indigo-900 text-white',
@@ -170,10 +170,10 @@ export function Services() {
           iconName: 'commerce',
           items: [
             'Ticari lokasyon analizi',
-            'Ticari yoğunluk değerlendirmesi',
+            'Ticari yoğunluk analizi',
             'Ticaret aksları incelemesi',
             'Ticari çekim merkezleri analizi',
-            'Fonksiyonel kullanım yapısı değerlendirmesi',
+            'Fonksiyonel kullanım yapısı analizi',
             'Bölgesel ekonomik yapı incelemesi'
           ]
         },
@@ -183,7 +183,7 @@ export function Services() {
           items: [
             'Yaya erişilebilirliği analizi',
             'Araç erişilebilirliği analizi',
-            'Toplu taşıma bağlantıları değerlendirmesi',
+            'Toplu taşıma bağlantıları analizi',
             'Otopark olanakları incelemesi',
             'Bölgesel ulaşım ağları analizi'
           ]
@@ -192,12 +192,12 @@ export function Services() {
           title: 'Mekânsal Performans Analizleri',
           iconName: 'performance',
           items: [
-            'Görünürlük değerlendirmesi',
+            'Görünürlük analizi',
             'Cephe etkinliği analizi',
             'Kullanıcı hareketliliği incelemesi',
-            'Yaya akışı değerlendirmesi',
+            'Yaya akışı analizi',
             'Bölgesel çekim gücü analizi',
-            'Çevresel kalite değerlendirmesi'
+            'Çevresel kalite analizi'
           ]
         },
         {
@@ -206,9 +206,9 @@ export function Services() {
           items: [
             'Emsal satış incelemeleri',
             'Emsal kira incelemeleri',
-            'Ticari gayrimenkul piyasası değerlendirmesi',
+            'Ticari gayrimenkul piyasası analizi',
             'Bölgesel fiyat eğilimleri analizi',
-            'Piyasa değer göstergelerinin yorumlanması'
+            'Piyasa fiyat göstergelerinin ve olması gereken fiyat aralıklarının yorumlanması'
           ]
         },
         {
@@ -216,11 +216,11 @@ export function Services() {
           iconName: 'regional_planning',
           items: [
             'Bölgesel gelişim eğilimleri incelemesi',
-            'Kamu yatırımları değerlendirmesi',
+            'Kamu yatırımları analizi',
             'Kentsel dönüşüm alanları incelemesi',
-            'Mekânsal gelişim kararlarının değerlendirilmesi',
+            'Mekânsal gelişim kararlarının analizi',
             'Ticaret ve hizmet sektörü dinamikleri analizi',
-            'Genel değerlendirme ve sonuç analizi'
+            'Genel sentez ve sonuç analizi'
           ]
         }
       ]
@@ -232,9 +232,8 @@ export function Services() {
       
       {/* Editorial Header Area with 212.604px Height (Matching the About Page style) */}
       <div 
-        className="relative overflow-hidden bg-[#0e3b23] text-white px-6 border-b border-white/10 flex flex-col justify-center" 
+        className="relative overflow-hidden bg-[#0e3b23] text-white px-6 border-b border-white/10 flex flex-col justify-center h-48 md:h-[212.604px]" 
         id="services-hero"
-        style={{ height: '212.604px' }}
       >
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff02_1px,transparent_1px),linear-gradient(to_bottom,#ffffff02_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none" />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-72 h-72 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
@@ -255,7 +254,7 @@ export function Services() {
             transition={{ duration: 0.5, delay: 0.2 }}
             className="text-white/80 max-w-2xl mx-auto text-xs md:text-sm font-normal leading-relaxed"
           >
-            Gayrimenkulünüzü Sadece Görünene Göre Değil, Entegre Coğrafi, Planlama ve Piyasa Verileriyle Değerlendirin.
+            Gayrimenkulünüzü Sadece Görünene Göre Değil, Entegre Coğrafi, Planlama ve Piyasa Verileriyle Analiz Edin ve Olması Gereken Fiyatını/Fiyat Aralığını Öğrenin.
           </motion.p>
         </div>
       </div>
@@ -264,14 +263,14 @@ export function Services() {
       <div className="max-w-5xl mx-auto px-6 py-10" id="services-intro-section">
         <div className="bg-white rounded-xl border border-gray-200/80 p-6 md:p-8 shadow-sm space-y-4">
           <h2 className="text-lg md:text-xl font-bold text-gray-900 tracking-tight border-b border-gray-150 pb-3">
-            Veriye Dayalı Analiz & Çok Boyutlu Değerlendirme Yaklaşımı
+            Veriye Dayalı Analiz & Çok Boyutlu Piyasa Fiyatı ve Fiyat Aralığı Tespiti Yaklaşımı
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs md:text-sm text-gray-650 leading-relaxed">
             <p>
-              Bir gayrimenkulün değeri yalnızca fiziksel özelliklerinden ibaret değildir. Bulunduğu çevrenin gelişim dinamikleri, ulaşım bağlantıları, planlama kararları, sosyal ve teknik altyapı olanakları, bölgesel piyasa koşulları ve mekânsal özellikleri değer oluşumunda en önemli rolü oynar.
+              Bir gayrimenkulün değeri yalnızca fiziksel özelliklerinden ibaret değildir. Bulunduğu çevrenin gelişim dinamiklerini, ulaşım bağlantıları, planlama kararları, sosyal ve teknik altyapı olanakları, bölgesel piyasa koşulları ve mekânsal özellikleri değer oluşumunda en önemli rolü oynar.
             </p>
             <p>
-              <strong>Değer Biç</strong>, konut, arsa ve ticari gayrimenkullere yönelik hazırladığı kapsamlı değerlendirme raporları ile taşınmazları çok boyutlu olarak analiz eder. Şehir plancıları, mimarlar ve mühendislerin profesyonel bakış açısıyla hazırlanan raporlarımız; karar alma süreçlerinde ihtiyaç duyduğunuz mekânsal, teknik ve piyasa verilerini en yalın ve anlaşılır biçimde masanıza getirir.
+              <strong>Değer Biç</strong>, konut, arsa ve ticari gayrimenkullere yönelik hazırladığı kapsamlı analiz ve fiyat aralığı raporları ile taşınmazları çok boyutlu olarak analiz eder. Şehir plancıları, mimarlar ve mühendislerin profesyonel bakış açısıyla hazırlanan raporlarımız; karar alma süreçlerinde ihtiyaç duyduğunuz mekânsal, teknik ve piyasa verilerini en yalın ve anlaşılır biçimde masanıza getirir.
             </p>
           </div>
         </div>
@@ -283,24 +282,17 @@ export function Services() {
           
           <div className="text-center space-y-1">
             <span className="text-[#1a5c3a] text-xs font-bold tracking-widest block">RAPOR TÜRLERİMİZ</span>
-            <h3 className="text-xl font-bold text-gray-950 tracking-tight text-center">Değerleme Ve Analiz Raporu Çözümlerimiz</h3>
+            <h3 className="text-xl font-bold text-gray-950 tracking-tight text-center">Gayrimenkul Analiz ve Piyasa Fiyat Aralığı Çözümlerimiz</h3>
             <div className="w-12 h-1 bg-[#1a5c3a] mx-auto rounded-full mt-1.5" />
           </div>
 
           {/* Mobile Select Dropdown (Visible only on mobile) */}
-          <div className="block md:hidden max-w-xs mx-auto px-2">
-            <label htmlFor="mobile-service-tab" className="sr-only">Rapor Türü Seçin</label>
-            <select
-              id="mobile-service-tab"
-              value={activeTab}
-              onChange={(e) => setActiveTab(e.target.value as 'konut' | 'arsa' | 'ticari')}
-              className="w-full bg-white border border-gray-300 text-gray-800 rounded-xl px-4 py-3 text-xs font-extrabold shadow-sm focus:outline-none focus:ring-2 focus:ring-[#1a5c3a]/50 focus:border-[#1a5c3a] cursor-pointer appearance-none text-center"
-              style={{ backgroundImage: `url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%23374151' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E")`, backgroundPosition: 'right 12px center', backgroundSize: '1.25em 1.25em', backgroundRepeat: 'no-repeat', paddingRight: '2rem' }}
-            >
-              <option value="konut">🏠 Konut Raporu</option>
-              <option value="arsa">🌳 Arsa Raporu</option>
-              <option value="ticari">🏢 Ticari Raporu</option>
-            </select>
+          <div className="block md:hidden max-w-lg mx-auto px-2">
+            <div className="grid grid-cols-3 gap-2">
+              <button onClick={() => setActiveTab('konut')} className={`px-2 py-2 rounded-lg text-[10px] font-bold transition-all ${activeTab === 'konut' ? 'bg-[#1a5c3a] text-white' : 'bg-white border border-gray-200 text-gray-600'}`}>🏠 Konut</button>
+              <button onClick={() => setActiveTab('arsa')} className={`px-2 py-2 rounded-lg text-[10px] font-bold transition-all ${activeTab === 'arsa' ? 'bg-[#f0a500] text-gray-950' : 'bg-white border border-gray-200 text-gray-600'}`}>🌳 Arsa</button>
+              <button onClick={() => setActiveTab('ticari')} className={`px-2 py-2 rounded-lg text-[10px] font-bold transition-all ${activeTab === 'ticari' ? 'bg-indigo-900 text-white' : 'bg-white border border-gray-200 text-gray-600'}`}>🏢 Ticari</button>
+            </div>
           </div>
 
           {/* Navigation Controls (Desktop-only) */}
@@ -433,7 +425,7 @@ export function Services() {
               <span className="inline-block p-1.5 bg-purple-50 text-purple-650 rounded-lg">
                 <Users size={14} />
               </span>
-              <h4 className="font-bold text-xs text-gray-950 tracking-tight">👨‍💼 UZMAN DEĞERLENDİRMESİ</h4>
+              <h4 className="font-bold text-xs text-gray-950 tracking-tight">👨‍💼 UZMAN ANALİZİ</h4>
               <p className="text-[10px] text-gray-500 leading-relaxed">
                 Şehir plancıları, mimarlar ve mühendislerin mesleki bilgi, planlama birikimi ve tecrübeleri raporlara yansıtılır.
               </p>
@@ -472,7 +464,7 @@ export function Services() {
           <div className="space-y-1.5">
             <h5 className="text-xs font-bold text-amber-800 tracking-widest">ÖNEMLİ BİLGİLENDİRME</h5>
             <p className="text-[11px] text-amber-900/80 leading-relaxed">
-              Değer Biç tarafından hazırlanan tüm raporlar, grafikler ve mekânsal analizler sadece bilgi verme, analiz yapma ve genel değerlendirme amacı taşımaktadır. Platformumuz tarafından üretilen hiçbir içerik yatırım tavsiyesi, hukuki görüş, resmi SPK lisanslı gayrimenkul ekspertiz raporu veya kanuni bir değerleme belgesi niteliğinde değerlendirilemez. Alınacak nihai finansal ve ticari kararların sorumluluğu tamamen kullanıcılara aittir.
+              Değer Biç tarafından hazırlanan tüm raporlar, grafikler ve mekânsal analizler sadece bilgi verme, analiz yapma ve genel analiz ile piyasa fiyat aralığı tespiti amacı taşımaktadır. Platformumuz tarafından üretilen hiçbir içerik yatırım tavsiyesi, hukuki görüş, resmi SPK lisanslı gayrimenkul ekspertiz raporu veya kanuni bir değerleme belgesi niteliğinde değerlendirilemez. Alınacak nihai finansal ve ticari kararların sorumluluğu tamamen kullanıcılara aittir.
             </p>
           </div>
         </div>

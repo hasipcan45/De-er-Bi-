@@ -33,7 +33,7 @@ interface ReportFlowModalProps {
   propertyData: any;
   user: UserProfile | null;
   onLoginSuccess: (user: UserProfile) => void;
-  onSubmitReport: (requestData: any, isRegistered: boolean, sourceOverride?: 'subscription' | 'singlePurchase') => string; // returns reportId
+  onSubmitReport: (requestData: any, isRegistered: boolean, sourceOverride?: 'subscription' | 'singlePurchase', selectedPackage?: 'Basit' | 'Orta' | 'Profesyonel', packagePrice?: number, preGeneratedReportId?: string) => Promise<string>;
   requests?: any[];
 }
 
@@ -52,6 +52,11 @@ export function ReportFlowModal({
   const [authMode, setAuthMode] = useState<'login' | 'register' | null>(null);
   const [showConsentText, setShowConsentText] = useState(false);
   
+  // Package Selection and EFT/Havale States
+  const [selectedPackage, setSelectedPackage] = useState<'Basit' | 'Orta' | 'Profesyonel'>('Basit');
+  const [copiedField, setCopiedField] = useState<string | null>(null);
+  const [isGeneratingCode, setIsGeneratingCode] = useState(false);
+
   // Login/Register fields (for step 2 inline option)
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -145,6 +150,9 @@ export function ReportFlowModal({
       setIsPaymentLoading(false);
       setIsAuthLoading(false);
       setShowConsentText(false);
+      setSelectedPackage('Basit');
+      setCopiedField(null);
+      setIsGeneratingCode(false);
       // Clean payment form
       setCardName('');
       setCardNumber('');
@@ -164,50 +172,192 @@ export function ReportFlowModal({
   // Determine property category
   const propType: PropertyType = propertyData?.type || 'konut';
 
-  // Quota calculations for logged in subscribers
-  const activeSubId = user?.activeSubscription?.subscriptionId;
-  const activeSubReports = activeSubId ? requests.filter(r => r.subscriptionId === activeSubId) : [];
-  const usedCount = activeSubReports.filter(r => r.type === propType).length;
- 
-   const getLimitForType = (type: PropertyType) => {
-     if (!user) return 0;
-     
-     if (user.activeSubscription) {
-       return user.activeSubscription.quota[type as keyof typeof user.activeSubscription.quota] || 0;
-     }
-
-     const extra = type === 'konut' ? (user.extraQuotaKonut || 0) : type === 'arsa' ? (user.extraQuotaArsa || 0) : (user.extraQuotaTicari || 0);
-     return extra;
-   };
- 
-   const typeLimit = getLimitForType(propType);
-   const effectiveMemType = getEffectiveMembership(user);
-   const hasActiveSub = !!user?.activeSubscription;
-   const hasUnusedQuota = user && (usedCount < typeLimit);
-   const isSubscriberOrHasExtra = user && (hasActiveSub || (typeLimit > 0));
-   const isQuotaExceeded = isSubscriberOrHasExtra && (usedCount >= typeLimit);
- 
-   // Determine pricing based on current step / status
-   const getPrice = () => {
-     const prices: Record<PropertyType, { guest: number; registered: number }> = {
-       konut: { guest: 399, registered: 349 },
-       arsa: { guest: 499, registered: 449 },
-       ticari: { guest: 599, registered: 549 }
-     };
-     
-     // If we have a user
-     if (user) {
-       if (hasUnusedQuota) {
-         return 0; // Free under subscription or extra quota
-       }
-       return prices[propType].registered;
-     }
-
-    // Default return guest price
-    return prices[propType].guest;
+  // Get packages for current property category
+  const getPackages = () => {
+    if (propType === 'arsa') {
+      return [
+        {
+          name: 'Basit' as const,
+          price: 200,
+          services: [
+            'Konumsal ve Ulaşım Erişilebilirliği Analizi',
+            'Piyasa Analizi',
+            'Genel Değerlendirme ve Sonuç'
+          ]
+        },
+        {
+          name: 'Orta' as const,
+          price: 300,
+          services: [
+            'Konumsal ve Ulaşım Erişilebilirliği Analizi',
+            'Piyasa Analizi',
+            'Genel Değerlendirme ve Sonuç',
+            'Yerleşim ve Kullanım İlişkisi Analizi',
+            'Uygulama İmar Planı Analizi',
+            'Bölgesel Piyasa Eğilimleri Analizi'
+          ]
+        },
+        {
+          name: 'Profesyonel' as const,
+          price: 600,
+          services: [
+            'Konumsal ve Ulaşım Erişilebilirliği Analizi',
+            'Piyasa Analizi',
+            'Genel Değerlendirme ve Sonuç',
+            'Yerleşim ve Kullanım İlişkisi Analizi',
+            'Uygulama İmar Planı Analizi',
+            'Bölgesel Piyasa Eğilimleri Analizi',
+            'Üst Ölçek Planlama Analizi',
+            'Çevresel ve Jeolojik Risk Analizi',
+            'Bölgesel Gelişim ve Yatırım Potansiyeli Analizi'
+          ]
+        }
+      ];
+    } else if (propType === 'ticari') {
+      return [
+        {
+          name: 'Basit' as const,
+          price: 300,
+          services: [
+            'Konumsal ve Ticari Erişilebilirlik Analizi',
+            'Piyasa Analizi',
+            'Genel Değerlendirme ve Sonuç'
+          ]
+        },
+        {
+          name: 'Orta' as const,
+          price: 400,
+          services: [
+            'Konumsal ve Ticari Erişilebilirlik Analizi',
+            'Piyasa Analizi',
+            'Genel Değerlendirme ve Sonuç',
+            'Ticari Yoğunluk ve Yaya Akışı Analizi',
+            'Sosyo-Ekonomik ve Demografik Analiz',
+            'Bölgesel Ticari Piyasa Eğilimleri Analizi'
+          ]
+        },
+        {
+          name: 'Profesyonel' as const,
+          price: 800,
+          services: [
+            'Konumsal ve Ticari Erişilebilirlik Analizi',
+            'Piyasa Analizi',
+            'Genel Değerlendirme ve Sonuç',
+            'Ticari Yoğunluk ve Yaya Akışı Analizi',
+            'Sosyo-Ekonomik ve Demografik Analiz',
+            'Bölgesel Ticari Piyasa Eğilimleri Analizi',
+            'Planlama ve Ticari İmar Kararları Analizi',
+            'Kamu Yatırımları ve Ticari Proje Etkisi Analizi',
+            'Ticari Kentsel Dönüşüm ve Yatırım Potansiyeli Analizi'
+          ]
+        }
+      ];
+    } else {
+      // konut
+      return [
+        {
+          name: 'Basit' as const,
+          price: 100,
+          services: [
+            'Konumsal ve Erişilebilirlik Analizi',
+            'Piyasa Analizi',
+            'Genel Değerlendirme ve Sonuç'
+          ]
+        },
+        {
+          name: 'Orta' as const,
+          price: 200,
+          services: [
+            'Konumsal ve Erişilebilirlik Analizi',
+            'Piyasa Analizi',
+            'Genel Değerlendirme ve Sonuç',
+            'Mahalle ve Sosyal Donatı Analizi',
+            'Sosyo-Ekonomik Analiz',
+            'Bölgesel Piyasa Eğilimleri Analizi'
+          ]
+        },
+        {
+          name: 'Profesyonel' as const,
+          price: 400,
+          services: [
+            'Konumsal ve Erişilebilirlik Analizi',
+            'Piyasa Analizi',
+            'Genel Değerlendirme ve Sonuç',
+            'Mahalle ve Sosyal Donatı Analizi',
+            'Sosyo-Ekonomik Analiz',
+            'Bölgesel Piyasa Eğilimleri Analizi',
+            'Planlama ve Üst Ölçek Karar Analizi',
+            'Kamu Yatırımları ve Proje Etkisi Analizi',
+            'Kentsel Dönüşüm ve Gelişim Potansiyeli Analizi'
+          ]
+        }
+      ];
+    }
   };
 
-  const currentPrice = getPrice();
+  // Determine pricing based on selected package and property type
+  const getPackagePrice = (pkg: 'Basit' | 'Orta' | 'Profesyonel') => {
+    const prices: Record<PropertyType, Record<'Basit' | 'Orta' | 'Profesyonel', number>> = {
+      konut: { Basit: 100, Orta: 200, Profesyonel: 400 },
+      arsa: { Basit: 200, Orta: 300, Profesyonel: 600 },
+      ticari: { Basit: 300, Orta: 400, Profesyonel: 800 }
+    };
+    return prices[propType]?.[pkg] || 0;
+  };
+
+  const currentPrice = getPackagePrice(selectedPackage);
+
+  // Helper function to generate unique, sequential report codes
+  const generateReportCodeLocal = async () => {
+    let prefix = 'DBK';
+    if (propType === 'arsa') {
+      prefix = 'DBA';
+    } else if (propType === 'ticari') {
+      prefix = 'DBT';
+    }
+
+    // Parse initials
+    const rawName = propertyData?.contactName || user?.fullName || 'Değer Biç';
+    const parts = rawName.trim().split(/\s+/).filter(Boolean);
+    let initials = 'DB';
+    if (parts.length > 0) {
+      if (parts.length === 1) {
+        initials = (parts[0][0] || 'D').toLocaleUpperCase('tr-TR');
+      } else {
+        const firstLetter = parts[0][0] || 'D';
+        const lastLetter = parts[parts.length - 1][0] || 'B';
+        initials = (firstLetter + lastLetter).toLocaleUpperCase('tr-TR');
+      }
+    }
+
+    const yy = new Date().getFullYear().toString().slice(-2);
+
+    let sequenceNumber = 1;
+    if (user) {
+      // Registered user: count their own requests of this type
+      const userRequestsOfType = requests.filter((r: any) => r.type === propType && r.userId === user.id);
+      sequenceNumber = userRequestsOfType.length + 1;
+    } else {
+      // Guest: use a public Firestore counter to ensure collective/global count increment
+      try {
+        const counterRef = doc(db, 'counters', `${propType}_guest`);
+        const counterSnap = await getDoc(counterRef);
+        if (counterSnap.exists()) {
+          const currentCount = counterSnap.data().count || 0;
+          sequenceNumber = currentCount + 1;
+        } else {
+          sequenceNumber = 1;
+        }
+      } catch (err) {
+        console.error("Error fetching guest counter:", err);
+        // Fallback
+        sequenceNumber = requests.filter((r: any) => r.type === propType && !r.userId).length + 1;
+      }
+    }
+
+    const seqStr = String(sequenceNumber).padStart(4, '0');
+    return `${prefix}-${initials}${yy}-${seqStr}`;
+  };
 
   // Step 1: Confirm details
   const handleConfirmWarning = () => {
@@ -321,78 +471,48 @@ export function ReportFlowModal({
     setCurrentStep('pricing');
   };
 
-  // Format Card Number
-  const formatCardNumberValue = (value: string) => {
-    const digits = value.replace(/\D/g, '').slice(0, 16);
-    const matches = digits.match(/\d{4,16}/g);
-    const match = (matches && matches[0]) || '';
-    const parts = [];
-
-    for (let i = 0, len = match.length; i < len; i += 4) {
-      parts.push(match.substring(i, i + 4));
-    }
-
-    if (parts.length > 0) {
-      return parts.join(' ');
-    } else {
-      return digits;
+  // Handle package selection submission and generate code
+  const handlePackageSubmit = async () => {
+    setIsGeneratingCode(true);
+    try {
+      const code = await generateReportCodeLocal();
+      setGeneratedReportId(code);
+      setCurrentStep('payment');
+    } catch (err) {
+      console.error("Error generating report code:", err);
+    } finally {
+      setIsGeneratingCode(false);
     }
   };
 
-  // Format Expiry Date
-  const formatExpiryValue = (value: string) => {
-    const digits = value.replace(/\D/g, '').slice(0, 4);
-    if (digits.length >= 3) {
-      return `${digits.slice(0, 2)}/${digits.slice(2, 4)}`;
-    }
-    return digits;
-  };
-
-  // Autofill mock test card
-  const handleAutofillTestCard = () => {
-    setCardName(user ? user.fullName : 'Test Kullanıcı');
-    setCardNumber('4355 8812 3445 1902');
-    setCardExpiry('12/29');
-    setCardCVC('342');
-  };
-
-  // Handle final Submission & Payment
+  // Handle final Submission & Payment (EFT/Havale)
   const handleCompleteFlow = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    setPaymentError(null);
-
-    // If payment is required
-    if (currentPrice > 0) {
-      const cleanNum = cardNumber.replace(/\s/g, '');
-      if (cleanNum.length < 16) {
-        setPaymentError('Lütfen geçerli 16 haneli kart numarası giriniz.');
-        return;
-      }
-      if (cardExpiry.length < 5) {
-        setPaymentError('Lütfen geçerli son kullanma tarihi giriniz (AA/YY).');
-        return;
-      }
-      if (cardCVC.length < 3) {
-        setPaymentError('Lütfen geçerli CVC (güvenlik kodu) giriniz.');
-        return;
-      }
-      if (!cardName) {
-        setPaymentError('Kart üzerindeki isim alanını doldurunuz.');
-        return;
-      }
-
-      setIsPaymentLoading(true);
-      // Simulate bank transaction delay
-      await new Promise(resolve => setTimeout(resolve, 1500));
+    setIsPaymentLoading(true);
+    try {
+      // Simulate submission/tactility
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      const userRole = !!user;
+      const reportSource = 'singlePurchase';
+      
+      // Save request to Firestore
+      await onSubmitReport(
+        propertyData, 
+        userRole, 
+        reportSource, 
+        selectedPackage, 
+        currentPrice, 
+        generatedReportId
+      );
+      
+      setCurrentStep('completed');
+    } catch (err) {
+      console.error("Error submitting request:", err);
+      setPaymentError("Talep gönderilirken bir hata oluştu. Lütfen tekrar deneyiniz.");
+    } finally {
       setIsPaymentLoading(false);
     }
-
-    // Submit request to App.tsx / global store
-    const userRole = user ? true : false;
-    const reportSource = currentPrice > 0 ? 'singlePurchase' : 'subscription';
-    const finalReportId = onSubmitReport(propertyData, userRole, reportSource);
-    setGeneratedReportId(finalReportId);
-    setCurrentStep('completed');
   };
 
   return (
@@ -423,8 +543,8 @@ export function ReportFlowModal({
             <h3 className="text-base font-extrabold text-gray-900 tracking-tight" id="modal-title">
               {currentStep === 'warning' && '1. Bilgilerin Doğruluğu'}
               {currentStep === 'auth_choice' && '2. Üye Girişi / Misafir'}
-              {currentStep === 'pricing' && '3. Rapor Ücreti ve Onay'}
-              {currentStep === 'payment' && '4. Güvenli Ödeme'}
+              {currentStep === 'pricing' && '3. Paket Seçimi'}
+              {currentStep === 'payment' && '4. Ödeme için Bilgiler'}
               {currentStep === 'completed' && 'İşlem Başarılı'}
             </h3>
             <p className="text-[10px] text-gray-400 font-semibold tracking-wider mt-1">
@@ -803,7 +923,7 @@ export function ReportFlowModal({
                           <strong className="text-gray-800">Bilgilerin Doğruluğu:</strong> Değerlendirme formunda beyan ettiğim taşınmaz bilgileri, iletişim bilgileri ve diğer tüm verilerin doğru, güncel ve eksiksiz olduğunu; yanlış veya yanıltıcı bilgi verilmesi halinde doğabilecek sonuçlardan sorumlu olduğumu kabul ederim.
                         </p>
                         <p>
-                          <strong className="text-gray-800">Hizmet Talebi:</strong> Bu değerleme analizi hizmetini kendi isteğim ve onayımla talep ettiğimi; ödemenin hizmet bedeli karşılığında yapıldığını ve hizmetin niteliği gereği rapor tesliminden sonra iade edilemeyeceğini bildiğimi kabul ederim.
+                          <strong className="text-gray-800">Hizmet Talebi:</strong> Bu gayrimenkul analiz hizmetini kendi isteğim ve onayımla talep ettiğimi; ödemenin hizmet bedeli karşılığında yapıldığını ve hizmetin niteliği gereği rapor tesliminden sonra iade edilemeyeceğini bildiğimi kabul ederim.
                         </p>
                         <p>
                           <strong className="text-gray-800">Yatırım Tavsiyesi Değildir:</strong> Tarafıma sunulacak raporun resmî ekspertiz raporu, yatırım danışmanlığı veya yatırım tavsiyesi niteliği taşımadığını; uzman görüşü ve teknik değerlendirmeden ibaret olduğunu; nihai yatırım/alım/satım kararının münhasıran kendime ait olduğunu bildiğimi ve değerbiç'i bu karardan doğacak sonuçlardan sorumlu tutmayacağımı kabul ederim.
@@ -857,12 +977,6 @@ export function ReportFlowModal({
                             <User size={18} />
                           </span>
                           <h4 className="text-xs font-bold text-gray-800">Misafir Olarak Devam Et</h4>
-                          <p className="text-[10px] text-gray-400 leading-relaxed">
-                            Kayıt olmadan hızlıca ödeme adımına ilerleyin. Raporunuz e-posta adresinize gönderilir.
-                          </p>
-                        </div>
-                        <div className="text-[11px] font-extrabold text-gray-500 pt-2 flex items-center gap-1">
-                          Misafir Fiyatı Tarifesi <ArrowRight size={11} className="text-gray-400" />
                         </div>
                       </button>
 
@@ -876,12 +990,6 @@ export function ReportFlowModal({
                             <UserCheck size={18} />
                           </span>
                           <h4 className="text-xs font-bold text-[#1a5c3a]">Üye Girişi Yap / Kayıt Ol</h4>
-                          <p className="text-[10px] text-emerald-800/70 leading-relaxed">
-                            Güvenli giriş yapın veya saniyeler içinde kaydolun. İndirimli üye fiyatlarından faydalanın.
-                          </p>
-                        </div>
-                        <div className="text-[11px] font-extrabold text-[#1a5c3a] pt-2 flex items-center gap-1">
-                          Kayıtlı Üye İndirimli Fiyatları <ArrowRight size={11} className="text-[#1a5c3a]" />
                         </div>
                       </button>
                     </div>
@@ -1093,262 +1201,267 @@ export function ReportFlowModal({
               </motion.div>
             )}
 
-            {/* STAGE 3: PRICING CONFIRMATION */}
+            {/* STAGE 3: PACKAGE SELECTION */}
             {currentStep === 'pricing' && (
               <motion.div
                 key="pricing-step"
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: 10 }}
-                className="space-y-5"
+                className="space-y-4 text-left"
                 id="step-pricing-container"
               >
-                {/* Visual Premium Badge showing current plan */}
-                <div className="flex items-center justify-between p-4 bg-emerald-500/[0.04] border border-[#1a5c3a]/20 rounded-xl">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-[#1a5c3a]/10 text-[#1a5c3a] rounded-lg shrink-0">
-                      <Sparkles size={16} />
-                    </div>
-                    <div>
-                      <h4 className="text-xs font-bold text-gray-800">
-                        {user ? `Giriş Yapıldı: ${user.fullName}` : 'Misafir Kullanıcı Girişi'}
-                      </h4>
-                      <p className="text-[10px] text-gray-400 font-medium">
-                        {user 
-                          ? (getEffectiveMembership(user) === 'monthly' || getEffectiveMembership(user) === 'yearly'
-                              ? `Aktif Profesyonel Aboneliği (Kota: ${usedCount}/${typeLimit} ${propType === 'konut' ? 'Konut' : propType === 'arsa' ? 'Arsa' : 'Ticari'})`
-                              : 'Kayıtlı Standart (Aboneliksiz) Üye')
-                          : 'Abone değilsiniz'}
-                      </p>
-                    </div>
-                  </div>
+                <div className="text-center space-y-1">
+                  <p className="text-xs text-gray-500 font-medium">
+                    İhtiyaçlarınıza en uygun analiz kapsamını seçerek uzman raporlama sürecini başlatın.
+                  </p>
                 </div>
 
-                {/* Main bill breakdown card */}
-                <div className="bg-gray-50 border border-gray-200 rounded-xl overflow-hidden shadow-sm">
-                  <div className="px-5 py-4 border-b border-gray-100 bg-white flex justify-between items-center">
-                    <span className="text-xs font-bold text-gray-800">Hizmet Kalemi</span>
-                    <span className="text-xs font-bold text-gray-800">Tutar</span>
-                  </div>
-                  
-                  <div className="p-5 space-y-3 text-xs">
-                    <div className="flex justify-between items-center">
-                      <div className="space-y-0.5">
-                        <span className="text-gray-700 font-bold block">
-                          {propType === 'konut' && 'Konut Değerleme Uzman Raporu'}
-                          {propType === 'arsa' && 'Arsa / Arazi Değerleme Uzman Raporu'}
-                          {propType === 'ticari' && 'Ticari Gayrimenkul Değerleme Uzman Raporu'}
-                        </span>
-                        <span className="text-[10px] text-gray-400 font-medium">
-                          1 Adet Bağımsız Rapor (Teslimat: 1 İş Günü)
-                        </span>
-                      </div>
-                      
-                      <span className="text-gray-500 font-semibold line-through">
-                        {propType === 'konut' ? '399 ₺' : propType === 'arsa' ? '499 ₺' : '599 ₺'}
-                      </span>
-                    </div>
+                {/* 3 Package Cards */}
+                <div className="space-y-4 max-h-[380px] overflow-y-auto pr-1 scrollbar-thin">
+                  {getPackages().map((pkg) => {
+                    const isSelected = selectedPackage === pkg.name;
+                    
+                    // Custom branding for each package
+                    let badgeText = "Temel Analiz";
+                    let badgeStyle = "bg-slate-100 text-slate-700 border-slate-200";
+                    let cardStyle = isSelected 
+                      ? "border-slate-600 bg-slate-50/40 shadow-md shadow-slate-900/5 ring-1 ring-slate-600" 
+                      : "border-gray-200 hover:border-gray-300";
+                    let iconBg = "bg-slate-50 text-slate-500";
+                    
+                    if (pkg.name === 'Orta') {
+                      badgeText = "⭐ En Popüler";
+                      badgeStyle = "bg-amber-100 text-amber-850 border-amber-200 font-black";
+                      cardStyle = isSelected
+                        ? "border-[#1a5c3a] bg-emerald-50/[0.04] shadow-md shadow-emerald-950/10 ring-1 ring-[#1a5c3a]"
+                        : "border-gray-200 hover:border-[#1a5c3a]/40";
+                      iconBg = "bg-emerald-50 text-[#1a5c3a]";
+                    } else if (pkg.name === 'Profesyonel') {
+                      badgeText = "🚀 Uzman Tercihi";
+                      badgeStyle = "bg-[#1a5c3a]/10 text-[#1a5c3a] border-emerald-200 font-black";
+                      cardStyle = isSelected
+                        ? "border-emerald-800 bg-emerald-50/[0.08] shadow-lg shadow-emerald-950/15 ring-2 ring-emerald-800"
+                        : "border-gray-200 hover:border-emerald-600/40";
+                      iconBg = "bg-emerald-100 text-emerald-800";
+                    }
 
-                    {/* Subscription benefit or Registered discount */}
-                    {user && (getEffectiveMembership(user) === 'monthly' || getEffectiveMembership(user) === 'yearly') ? (
-                      isQuotaExceeded ? (
-                        <div className="space-y-2">
-                          <div className="flex flex-col gap-1 text-amber-800 bg-amber-50 p-3 rounded-lg border border-amber-200">
-                            <span className="font-bold flex items-center gap-1.5">
-                              <Sparkles size={14} /> Paket Kotanız Dolmuştur
+                    return (
+                      <div
+                        key={pkg.name}
+                        onClick={() => setSelectedPackage(pkg.name)}
+                        className={`p-4 bg-white rounded-xl border-2 cursor-pointer transition-all relative flex flex-col justify-between group ${cardStyle}`}
+                      >
+                        {/* Selector indicator */}
+                        <span className={`absolute top-4 right-4 w-5 h-5 rounded-full border flex items-center justify-center transition-all ${
+                          isSelected 
+                            ? 'bg-[#1a5c3a] border-[#1a5c3a] text-white scale-110' 
+                            : 'border-gray-300 group-hover:border-gray-400 bg-white'
+                        }`}>
+                          {isSelected && <Check size={11} strokeWidth={4} />}
+                        </span>
+                        
+                        <div className="space-y-3.5">
+                          {/* Header section with Badges and Title */}
+                          <div className="flex items-center gap-2">
+                            <span className={`text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full border tracking-wider ${badgeStyle}`}>
+                              {badgeText}
                             </span>
-                            <span className="text-[10px] text-amber-700">
-                              Bu mülk türü ({propType === 'konut' ? 'Konut' : propType === 'arsa' ? 'Arsa' : 'Ticari'}) için paket kotanız ({usedCount}/{typeLimit}) dolmuştur. Bu talebinizi standart üye indirimi ile gerçekleştirebilirsiniz.
-                            </span>
+                            {pkg.name === 'Profesyonel' && (
+                              <span className="text-[10px] text-amber-500 flex items-center gap-0.5">
+                                <Sparkles size={11} className="fill-current" />
+                                En Detaylı
+                              </span>
+                            )}
                           </div>
-                          <div className="flex justify-between items-center text-[#1a5c3a] font-bold bg-emerald-50/50 p-2.5 rounded-lg border border-emerald-100/60">
-                            <span className="flex items-center gap-1.5">
-                              <Check size={14} /> Standart Üye İndirimi
-                            </span>
-                            <span>- 50 ₺</span>
+
+                          <div className="flex items-baseline justify-between">
+                            <div className="space-y-0.5">
+                              <h4 className="text-sm font-black text-gray-900 group-hover:text-[#1a5c3a] transition-colors">
+                                {pkg.name} Analiz Raporu
+                              </h4>
+                              <p className="text-[10px] text-gray-400 font-medium">
+                                {pkg.services.length} Analitik Analiz Kalemi
+                              </p>
+                            </div>
+                            <div className="text-right">
+                              <span className="text-base font-black text-[#1a5c3a]">{pkg.price} ₺</span>
+                              <span className="text-[9px] text-gray-400 block font-medium">Tek Seferlik</span>
+                            </div>
+                          </div>
+                          
+                          {/* Service Checklist with elegant checkmarks */}
+                          <div className="border-t border-gray-100/80 pt-3">
+                            <ul className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-1.5 text-[11px] text-gray-600">
+                              {pkg.services.map((srv, idx) => (
+                                <li key={idx} className="flex items-start gap-1.5">
+                                  <span className={`mt-0.5 shrink-0 w-3.5 h-3.5 rounded-full flex items-center justify-center text-[10px] ${iconBg}`}>
+                                    ✓
+                                  </span>
+                                  <span className="leading-snug text-gray-700">{srv}</span>
+                                </li>
+                              ))}
+                            </ul>
                           </div>
                         </div>
-                      ) : (
-                        <div className="flex justify-between items-center text-[#1a5c3a] font-bold bg-emerald-50/50 p-2.5 rounded-lg border border-emerald-100/60">
-                          <span className="flex items-center gap-1.5">
-                            <Check size={14} /> Profesyonel Paket Muafiyeti (1 Hak)
-                          </span>
-                          <span>- {propType === 'konut' ? '399 ₺' : propType === 'arsa' ? '499 ₺' : '599 ₺'}</span>
-                        </div>
-                      )
-                    ) : user ? (
-                      <div className="flex justify-between items-center text-[#1a5c3a] font-bold bg-emerald-50/50 p-2.5 rounded-lg border border-emerald-100/60">
-                        <span className="flex items-center gap-1.5">
-                          <Check size={14} /> Standart Üye İndirimi
-                        </span>
-                        <span>- 50 ₺</span>
                       </div>
-                    ) : null}
-
-                    {/* Total billing line */}
-                    <div className="flex justify-between items-center pt-3 border-t border-gray-200/60">
-                      <span className="text-xs font-extrabold text-gray-900">ÖDENECEK TUTAR</span>
-                      <span className="text-lg font-black text-[#1a5c3a]">
-                        {currentPrice === 0 ? '0 ₺ (Paket Hakkı)' : `${currentPrice} ₺`}
-                      </span>
-                    </div>
-                  </div>
+                    );
+                  })}
                 </div>
 
-                <div className="flex gap-3">
-                  {/* Cancel / Back button */}
-                  {(!user) && (
-                    <button
-                      onClick={() => setCurrentStep('auth_choice')}
-                      className="w-1/3 py-3 border border-gray-200 text-gray-500 font-bold hover:bg-gray-50 text-xs rounded-xl cursor-pointer"
-                    >
-                      Geri Git
-                    </button>
-                  )}
-                  
+                <div className="flex gap-3 pt-2">
                   <button
                     onClick={() => {
-                      if (currentPrice === 0) {
-                        handleCompleteFlow();
+                      if (!user) {
+                        setCurrentStep('auth_choice');
                       } else {
-                        setCurrentStep('payment');
+                        setCurrentStep('warning');
                       }
                     }}
+                    className="w-1/3 py-3 border border-gray-200 text-gray-500 font-bold hover:bg-gray-50 text-xs rounded-xl cursor-pointer"
+                  >
+                    Geri Git
+                  </button>
+                  
+                  <button
+                    onClick={handlePackageSubmit}
+                    disabled={isGeneratingCode}
                     className="flex-1 py-3.5 bg-[#1a5c3a] text-white hover:bg-[#2d8a58] font-bold text-xs rounded-xl tracking-wide shadow-md shadow-emerald-950/15 flex items-center justify-center gap-1.5 cursor-pointer"
                     id="btn-confirm-pricing"
                   >
-                    {currentPrice === 0 ? 'Onayla ve Talebi Gönder (Ücretsiz)' : 'Ödeme Adımına İlerle'}
-                    <ArrowRight size={14} />
+                    {isGeneratingCode ? (
+                      <>
+                        <Loader2 className="animate-spin" size={13} />
+                        Kod Oluşturuluyor...
+                      </>
+                    ) : (
+                      <>
+                        Ödeme Adımına İlerle
+                        <ArrowRight size={14} />
+                      </>
+                    )}
                   </button>
                 </div>
               </motion.div>
             )}
 
-            {/* STAGE 4: PAYMENT SCREEN */}
+            {/* STAGE 4: PAYMENT SCREEN (EFT / HAVALE) */}
             {currentStep === 'payment' && (
               <motion.div
                 key="payment-step"
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: 10 }}
-                className="space-y-4"
+                className="space-y-4 text-left"
                 id="step-payment-container"
               >
-                {/* Minimal dynamic card helper */}
-                <div className="bg-[#12311f] p-4.5 rounded-2xl text-white relative overflow-hidden shadow-md">
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-[#1a5c3a]/20 rounded-full blur-2xl" />
-                  <div className="flex justify-between items-start">
-                    <span className="text-[10px] font-bold tracking-widest text-[#f0a500]">DEĞERBİÇ GÜVENCESİ</span>
-                    <Lock size={15} className="text-white/40" />
+                {/* Package Summary Header */}
+                <div className="bg-emerald-500/[0.04] p-4.5 rounded-xl border border-[#1a5c3a]/25 space-y-2">
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="font-bold text-gray-700">Seçilen Hizmet Paketi:</span>
+                    <span className="font-extrabold text-[#1a5c3a]">{selectedPackage} Analiz</span>
                   </div>
-                  
-                  <div className="mt-6 space-y-1.5">
-                    <span className="text-[10px] text-white/50 block font-semibold">Toplam Çekilecek Tutar</span>
-                    <span className="text-xl font-black text-white">{currentPrice} ₺</span>
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="font-bold text-gray-700">Ödenecek Toplam Tutar:</span>
+                    <span className="font-extrabold text-base text-[#1a5c3a]">{currentPrice} ₺</span>
                   </div>
                 </div>
 
-                {/* Form fields */}
-                <form onSubmit={handleCompleteFlow} className="space-y-3.5">
-                  {paymentError && (
-                    <div className="p-2.5 bg-red-50 text-red-650 text-xs font-semibold rounded-lg border border-red-100">
-                      ⚠️ {paymentError}
+                {/* EFT/Havale Bank details */}
+                <div className="bg-gray-50 border border-gray-200 rounded-xl p-4.5 space-y-4">
+                  <h4 className="text-[10px] font-bold text-[#1a5c3a] tracking-widest uppercase">ÖDEME İÇİN BANKA BİLGİLERİ (EFT / HAVALE)</h4>
+                  
+                  <div className="space-y-3 text-xs">
+                    {/* Bank Name */}
+                    <div className="flex flex-col bg-white p-2.5 rounded-lg border border-gray-100">
+                      <span className="text-[10px] text-gray-400 font-semibold">BANKA</span>
+                      <span className="font-bold text-gray-800">Garanti BBVA</span>
                     </div>
-                  )}
 
-                  <div className="flex flex-col gap-1 relative">
-                    <div className="flex justify-between items-center">
-                      <label className="text-[11px] text-gray-500 font-medium">Kart Sahibinin Adı Soyadı</label>
-                      <button
-                        type="button"
-                        onClick={handleAutofillTestCard}
-                        className="text-[10px] text-[#1a5c3a] font-bold hover:underline flex items-center gap-1 cursor-pointer"
-                      >
-                        <Coins size={11} /> Test Kartı Doldur
-                      </button>
+                    {/* Account Holder */}
+                    <div className="flex flex-col bg-white p-2.5 rounded-lg border border-gray-100">
+                      <span className="text-[10px] text-gray-400 font-semibold">HESAP SAHİBİ</span>
+                      <span className="font-bold text-gray-800">Hasipcan GÖK</span>
                     </div>
-                    <input 
-                      type="text"
-                      required
-                      value={cardName}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        setCardName(val.replace(/i/g, 'İ').replace(/ı/g, 'I').toUpperCase());
-                      }}
-                      placeholder="KART SAHİBİ"
-                      className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-[#1a5c3a] font-bold"
-                    />
-                  </div>
 
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[11px] text-gray-500 font-medium">Kart Numarası</label>
-                    <div className="relative">
-                      <input 
-                        type="text"
-                        required
-                        value={cardNumber}
-                        onChange={(e) => setCardNumber(formatCardNumberValue(e.target.value))}
-                        placeholder="0000 0000 0000 0000"
-                        maxLength={19}
-                        className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 pl-9 text-xs focus:ring-1 focus:ring-[#1a5c3a] font-mono font-semibold"
-                      />
-                      <CreditCard size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                    {/* IBAN */}
+                    <div className="flex flex-col bg-white p-2.5 rounded-lg border border-gray-100 relative group">
+                      <div className="flex justify-between items-center">
+                        <span className="text-[10px] text-gray-400 font-semibold">IBAN NUMARASI</span>
+                        <button
+                          onClick={() => {
+                            navigator.clipboard.writeText('TR03 0006 2000 6870 0006 8785 09');
+                            setCopiedField('iban');
+                            setTimeout(() => setCopiedField(null), 2000);
+                          }}
+                          className="text-[10px] text-[#1a5c3a] font-bold hover:underline cursor-pointer bg-transparent border-none"
+                        >
+                          {copiedField === 'iban' ? '✓ Kopyalandı!' : 'Kopyala'}
+                        </button>
+                      </div>
+                      <span className="font-mono font-bold text-gray-850 tracking-wider">TR03 0006 2000 6870 0006 8785 09</span>
                     </div>
-                  </div>
 
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[11px] text-gray-500 font-medium">Son Kullanma (AA/YY)</label>
-                      <input 
-                        type="text"
-                        required
-                        value={cardExpiry}
-                        onChange={(e) => setCardExpiry(formatExpiryValue(e.target.value))}
-                        placeholder="AA/YY"
-                        maxLength={5}
-                        className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-[#1a5c3a] text-center font-mono font-semibold"
-                      />
-                    </div>
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[11px] text-gray-500 font-medium">CVC (Güvenlik Kodu)</label>
-                      <input 
-                        type="password"
-                        required
-                        value={cardCVC}
-                        onChange={(e) => setCardCVC(e.target.value.replace(/\D/g, '').slice(0, 3))}
-                        placeholder="000"
-                        maxLength={3}
-                        className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-[#1a5c3a] text-center font-mono font-semibold"
-                      />
+                    {/* Description (Rapor Kodu) */}
+                    <div className="flex flex-col bg-amber-50/50 p-2.5 rounded-lg border border-amber-200/50 relative">
+                      <div className="flex justify-between items-center">
+                        <span className="text-[10px] text-amber-800 font-bold">ÖDEME AÇIKLAMASI (RAPOR KODU)</span>
+                        <button
+                          onClick={() => {
+                            navigator.clipboard.writeText(generatedReportId);
+                            setCopiedField('code');
+                            setTimeout(() => setCopiedField(null), 2000);
+                          }}
+                          className="text-[10px] text-[#1a5c3a] font-bold hover:underline cursor-pointer bg-transparent border-none"
+                        >
+                          {copiedField === 'code' ? '✓ Kopyalandı!' : 'Kopyala'}
+                        </button>
+                      </div>
+                      <span className="font-mono font-black text-sm text-amber-900 tracking-wider mt-1">{generatedReportId}</span>
+                      <p className="text-[10px] text-amber-800/80 leading-normal mt-1.5 font-medium">
+                        ⚠️ Ödemeyi gönderirken açıklama alanına <strong>sadece bu kodu</strong> yazınız.
+                      </p>
                     </div>
                   </div>
+                </div>
 
-                  <div className="flex gap-2.5 pt-2">
-                    <button 
-                      type="button"
-                      disabled={isPaymentLoading}
-                      onClick={() => setCurrentStep('pricing')}
-                      className="w-1/3 py-3 border border-gray-200 hover:bg-gray-50 text-gray-500 text-xs font-bold rounded-xl transition-all cursor-pointer"
-                    >
-                      Geri Dön
-                    </button>
-                    <button 
-                      type="submit"
-                      disabled={isPaymentLoading}
-                      className="flex-1 py-3.5 bg-[#1a5c3a] hover:bg-[#2d8a58] text-white text-xs font-bold rounded-xl tracking-wider transition-all flex items-center justify-center gap-1.5 shadow-md shadow-emerald-950/15 cursor-pointer"
-                      id="btn-pay-submit"
-                    >
-                      {isPaymentLoading ? (
-                        <>
-                          <Loader2 className="animate-spin" size={13} />
-                          Güvenli Banka Onayı Alınıyor...
-                        </>
-                      ) : (
-                        `Güvenli Ödeme Yap (${currentPrice} ₺)`
-                      )}
-                    </button>
+                <div className="p-3.5 bg-blue-50 border border-blue-100 rounded-xl flex items-start gap-3">
+                  <Info size={16} className="text-blue-700 shrink-0 mt-0.5" />
+                  <p className="text-[10.5px] text-blue-800 leading-relaxed font-medium">
+                    Belirtilen paket ücretini banka hesabımıza gönderip, açıklama kısmına rapor kodunuzu ekledikten sonra aşağıdaki butona tıklayarak işleminizi tamamlayabilirsiniz.
+                  </p>
+                </div>
+
+                {paymentError && (
+                  <div className="p-2.5 bg-red-50 text-red-650 text-xs font-semibold rounded-lg border border-red-100">
+                    ⚠️ {paymentError}
                   </div>
-                </form>
+                )}
+
+                <div className="flex gap-2.5 pt-2">
+                  <button 
+                    disabled={isPaymentLoading}
+                    onClick={() => setCurrentStep('pricing')}
+                    className="w-1/3 py-3 border border-gray-200 hover:bg-gray-50 text-gray-500 text-xs font-bold rounded-xl transition-all cursor-pointer"
+                  >
+                    Geri Dön
+                  </button>
+                  <button 
+                    onClick={() => handleCompleteFlow()}
+                    disabled={isPaymentLoading}
+                    className="flex-1 py-3.5 bg-[#1a5c3a] hover:bg-[#2d8a58] text-white text-xs font-bold rounded-xl tracking-wider transition-all flex items-center justify-center gap-1.5 shadow-md shadow-emerald-950/15 cursor-pointer"
+                    id="btn-pay-submit"
+                  >
+                    {isPaymentLoading ? (
+                      <>
+                        <Loader2 className="animate-spin" size={13} />
+                        Talep Gönderiliyor...
+                      </>
+                    ) : (
+                      "Raporu Talep Et"
+                    )}
+                  </button>
+                </div>
               </motion.div>
             )}
 
@@ -1368,13 +1481,13 @@ export function ReportFlowModal({
 
                 <div className="space-y-2">
                   <h4 className="text-lg font-black text-gray-900 tracking-tight">Rapor Talebiniz Başarıyla Alındı!</h4>
-                  <p className="text-xs text-gray-400 max-w-sm mx-auto leading-relaxed">
-                    Ödemeniz başarıyla doğrulanmıştır. Gayrimenkul değerleme uzmanlarımız hemen incelemelerini başlatacaktır.
+                  <p className="text-xs text-emerald-800 font-semibold max-w-sm mx-auto leading-relaxed p-3.5 bg-emerald-50 border border-emerald-100 rounded-xl">
+                    "Ödemeniz tarafımıza ulaşıp doğrulandıktan sonra analiz süreci başlatılacaktır. Raporunuz en geç 1 iş günü içerisinde hazırlanarak tarafınıza teslim edilecektir."
                   </p>
                 </div>
 
                 {/* Elegant Report Ticket Card */}
-                <div className="bg-gray-50 p-5 rounded-2xl border border-gray-200/80 max-w-sm mx-auto text-xs space-y-3.5 relative overflow-hidden">
+                <div className="bg-gray-50 p-5 rounded-2xl border border-gray-200/80 max-w-sm mx-auto text-xs space-y-3.5 relative overflow-hidden text-left">
                   <div className="absolute top-0 inset-x-0 h-1 bg-[#1a5c3a]/30" />
                   
                   <div className="flex justify-between items-center">
@@ -1386,20 +1499,28 @@ export function ReportFlowModal({
 
                   <div className="border-t border-dashed border-gray-200 pt-3.5 space-y-2 text-left">
                     <div className="flex justify-between">
-                      <span className="text-gray-400 font-medium">Yöntem:</span>
-                      <span className="text-gray-700 font-bold">{currentPrice === 0 ? 'Abonelik Kapsamı (Ücretsiz)' : 'Güvenli Kredi Kartı'}</span>
+                      <span className="text-gray-400 font-medium">Hizmet Paketi:</span>
+                      <span className="text-gray-700 font-bold">{selectedPackage} Analiz</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-400 font-medium">Gayrimenkul:</span>
+                      <span className="text-gray-400 font-medium">Ödeme Tutarı:</span>
+                      <span className="text-gray-700 font-bold">{currentPrice} ₺</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-400 font-medium">Ödeme Yöntemi:</span>
+                      <span className="text-gray-700 font-bold">Banka Havalesi (EFT/Havale)</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-400 font-medium">Gayrimenkul Türü:</span>
                       <span className="text-gray-700 font-bold">{propType === 'konut' ? 'KONUT' : propType === 'arsa' ? 'ARSA / ARAZİ' : 'TİCARİ'}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-400 font-medium">Beklenen Süre:</span>
-                      <span className="text-[#1a5c3a] font-bold">1 İş Günü İçinde</span>
+                      <span className="text-gray-400 font-medium">Teslimat Süresi:</span>
+                      <span className="text-[#1a5c3a] font-bold">En geç 1 İş Günü</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-400 font-medium">E-posta:</span>
-                      <span className="text-gray-700 font-semibold truncate max-w-[200px]">{propertyData?.contactEmail}</span>
+                      <span className="text-gray-400 font-medium">Gönderilecek E-posta:</span>
+                      <span className="text-gray-700 font-semibold truncate max-w-[180px]">{propertyData?.contactEmail}</span>
                     </div>
                   </div>
                 </div>
@@ -1455,7 +1576,7 @@ export function ReportFlowModal({
                 
                 <p className="font-semibold text-gray-700">1. Giriş ve Kapsam</p>
                 <p>
-                  Bu Gizlilik Politikası, değerbiç platformu ("Platform", "değerbiç", "biz") tarafından sunulan gayrimenkul değerleme analizi ve imar danışmanlığı hizmetlerinin kullanımı kapsamında kullanıcılardan ("siz", "kullanıcı") toplanan kişisel verilerin işlenmesine ilişkin esasları düzenlemektedir. Bu Politika; 6698 sayılı Kişisel Verilerin Korunması Kanunu (KVKK) ve Kişisel Verileri Koruma Kurulu tarafından yayımlanan ikincil düzenlemeler çerçevesinde hazırlanmıştır. Platform'u kullanarak veya hizmetlerimize başvurarak bu Politika'da belirtilen koşulları kabul etmiş sayılırsınız.
+                  Bu Giriş ve Kapsam metni, değerbiç platformu ("Platform", "değerbiç", "biz") tarafından sunulan gayrimenkul analizi ve imar danışmanlığı hizmetlerinin kullanımı kapsamında kullanıcılardan ("siz", "kullanıcı") toplanan kişisel verilerin işlenmesine ilişkin esasları düzenlemektedir. Bu Politika; 6698 sayılı Kişisel Verilerin Korunması Kanunu (KVKK) ve Kişisel Verileri Koruma Kurulu tarafından yayımlanan ikincil düzenlemeler çerçevesinde hazırlanmıştır. Platform'u kullanarak veya hizmetlerimize başvurarak bu Politika'da belirtilen koşulları kabul etmiş sayılırsınız.
                 </p>
 
                 <p className="font-semibold text-gray-700">2. Veri Sorumlusunun Kimliği</p>
@@ -1474,7 +1595,7 @@ export function ReportFlowModal({
                   <li>E-posta adresi</li>
                 </ul>
 
-                <p><strong>3.2 Hizmet Kapsamında İşlenen Taşınmaz Bilgileri</strong><br />Talep edilen değerleme analizi raporuna konu taşınmazla ilgili kullanıcının beyan ettiği bilgiler işlenmektedir. Bu veriler kişisel veri niteliği taşımamakla birlikte kişiyle ilişkilendirilebildiği ölçüde bu Politika kapsamında değerlendirilir:</p>
+                <p><strong>3.2 Hizmet Kapsamında İşlenen Taşınmaz Bilgileri</strong><br />Talep edilen analiz raporuna konu taşınmazla ilgili kullanıcının beyan ettiği bilgiler işlenmektedir. Bu veriler kişisel veri niteliği taşımamakla birlikte kişiyle ilişkilendirilebildiği ölçüde bu Politika kapsamında değerlendirilir:</p>
                 <ul className="list-disc pl-4 space-y-1">
                   <li>Taşınmazın il, ilçe, mahalle, ada ve parsel bilgileri</li>
                   <li>Taşınmaz türü (konut, arsa, ticari vb.) ve özellikleri</li>
@@ -1501,7 +1622,7 @@ export function ReportFlowModal({
                 <p>Kişisel verileriniz aşağıdaki amaçlarla ve KVKK'nın 5. maddesi kapsamındaki hukuki dayanaklar esas alınarak işlenmektedir.</p>
                 <p><strong>Sözleşmenin kurulması ve ifası (KVKK m.5/2-c):</strong></p>
                 <ul className="list-disc pl-4 space-y-1">
-                  <li>Hizmet talebinin alınması ve değerleme raporunun hazırlanması</li>
+                  <li>Hizmet talebinin alınması ve analiz raporunun hazırlanması</li>
                   <li>Ödeme süreçlerinin yönetimi (ödeme aracı kurumu üzerinden)</li>
                   <li>Rapor teslimi ve üyelik yönetimi</li>
                 </ul>
@@ -1538,7 +1659,7 @@ export function ReportFlowModal({
                 <p>Kişisel verileriniz, işlenme amacının sona ermesinin ardından KVKK'nın 7. maddesi ve Kişisel Verileri Koruma Kurulu kararları çerçevesinde silinir, yok edilir veya anonim hale getirilir.</p>
                 <ul className="list-disc pl-4 space-y-1">
                   <li>Üyelik verileri: üyeliğin sonlandırılmasından itibaren 3 yıl</li>
-                  <li>Değerleme raporu ve taşınmaz bilgileri: raporun tesliminden itibaren 5 yıl</li>
+                  <li>Analiz raporu ve taşınmaz bilgileri: raporun tesliminden itibaren 5 yıl</li>
                   <li>Ödeme işlem kayıtları: 213 sayılı Vergi Usul Kanunu gereği 5 yıl</li>
                   <li>Teknik ve sistem günlükleri: en fazla 2 yıl</li>
                   <li>Açık rızaya dayalı pazarlama iletişimi: rıza geri alınana kadar, azami 3 yıl</li>
@@ -1601,17 +1722,17 @@ export function ReportFlowModal({
                 <p>Bu Politika'dan doğan uyuşmazlıklarda öncelikle Madde 8'de belirtilen başvuru yolları kullanılacaktır. Çözüme kavuşturulamayan durumlarda Kişisel Verileri Koruma Kurulu ve Türk mahkemeleri yetkilidir. Bu Politika; Türk hukuku ve KVKK hükümleri çerçevesinde yorumlanır.</p>
 
                 <p className="font-semibold text-gray-700">13. Yatırım Tavsiyesi Değildir</p>
-                <p>değerbiç tarafından hazırlanan değerleme analizi raporları ve Platform'da sunulan tüm içerikler; şehir plancıları, mimarlar ve mühendisler tarafından mevcut teknik veriler, emsal araştırmaları ve bölgesel plan kararları esas alınarak hazırlanan uzman görüşü niteliğindedir. Bu raporlar ve içerikler hiçbir koşulda aşağıdaki nitelikleri taşımaz:</p>
+                <p>değerbiç tarafından hazırlanan analiz ve fiyat aralığı raporları ve Platform'da sunulan tüm içerikler; şehir plancıları, mimarlar ve mühendisler tarafından mevcut teknik veriler, emsal araştırmaları ve bölgesel plan kararları esas alınarak hazırlanan uzman görüşü niteliğindedir. Bu raporlar ve içerikler hiçbir koşulda aşağıdaki nitelikleri taşımaz:</p>
                 <ul className="list-disc pl-4 space-y-1">
                   <li>Yatırım tavsiyesi veya yatırım danışmanlığı hizmeti</li>
                   <li>Sermaye Piyasası Kurulu (SPK) lisansı gerektiren finansal analiz veya portföy yönetimi hizmeti</li>
-                  <li>Resmî ekspertiz ya da yasal bağlayıcılığı olan değerleme raporu</li>
-                  <li>Bankacılık veya ipotek süreçlerinde kullanılebilecek biçimsel değerleme belgesi</li>
+                  <li>Resmî ekspertiz ya da yasal bağlayıcılığı olan resmi değer tespiti veya kıymet takdiri raporu</li>
+                  <li>Bankacılık veya ipotek süreçlerinde kullanılabilecek biçimsel resmi kıymet takdir belgesi</li>
                 </ul>
                 <p>Kullanıcı, Platform üzerinden eriştiği analiz, rapor ve bilgileri yalnızca bilgi edinme ve karar destek amacıyla kullanabileceğini; nihai yatırım, alım, satım veya finansman kararından doğan her türlü sonucun münhasıran kendisine ait olduğunu kabul eder. değerbiç; kullanıcının Platform içeriklerine dayanarak verdiği kararlar sonucunda uğrayabileceği doğrudan veya dolaylı zarar, kayıp ya da kâr yoksunluğundan sorumlu tutulamaz.</p>
                 
                 <p className="text-gray-400 text-[10px] pt-2 border-t border-gray-100 text-center">
-                  değerbiç | Gayrimenkul Değerleme Analizi Platformu | degerbic@hotmail.com
+                  değerbiç | Gayrimenkul Analiz Platformu | degerbic@hotmail.com
                 </p>
               </div>
               <div className="pt-3 border-t border-gray-100 flex justify-end">

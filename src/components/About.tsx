@@ -47,9 +47,8 @@ export function About() {
       
       {/* Sleek, Compact Hero Area with exact 212.604px height */}
       <div 
-        className="relative overflow-hidden bg-[#0e3b23] text-white px-6 border-b border-white/10 flex flex-col justify-center" 
+        className="relative overflow-hidden bg-[#0e3b23] text-white px-6 border-b border-white/10 flex flex-col justify-center h-48 md:h-[212.604px]" 
         id="about-hero"
-        style={{ height: '212.604px' }}
       >
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff02_1px,transparent_1px),linear-gradient(to_bottom,#ffffff02_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none" />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-72 h-72 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
@@ -61,7 +60,7 @@ export function About() {
             transition={{ duration: 0.5, delay: 0.1 }}
             className="text-2xl md:text-4xl font-extrabold tracking-tight leading-tight"
           >
-            HAKKIMIZDA
+            KURUMSAL
           </motion.h1>
           
           <motion.p 
@@ -112,10 +111,10 @@ export function About() {
               </div>
               <div className="space-y-2.5 text-xs text-gray-600 leading-relaxed">
                 <p>
-                  Değer Biç; konut, arsa ve ticari gayrimenkullere yönelik analiz ve değerlendirme raporları sunan dijital bir gayrimenkul karar destek platformudur.
+                  Değer Biç; konut, arsa ve ticari gayrimenkullere yönelik analiz ve piyasa fiyat aralığı raporları sunan dijital bir gayrimenkul karar destek platformudur.
                 </p>
                 <p>
-                  Platformumuz, taşınmazların yalnızca mevcut piyasa koşullarını değil; aynı zamanda bulunduğu bölgenin gelişim dinamiklerini, çevresel özelliklerini ve gelecekteki potansiyelini de değerlendirir.
+                  Platformumuz, taşınmazların yalnızca mevcut piyasa koşullarını değil; aynı zamanda bulunduğu bölgenin gelişim dinamiklerini, çevresel özelliklerini ve gelecekteki potansiyelini de analiz eder.
                 </p>
                 <p>
                   Böylece kullanıcılarımız sadece anlık bir fiyat bilgisine değil, kararlarını destekleyecek kapsamlı bir analiz altyapısına kolayca erişebilir.
@@ -283,7 +282,7 @@ export function About() {
                 </div>
                 <h4 className="text-xs font-bold text-gray-950 tracking-tight">PROFESYONELLER</h4>
                 <p className="text-[10.5px] text-gray-500 leading-relaxed">
-                  Müşterilerine veri destekli güçlü ve ikna edici değerlendirme raporları sunan danışmanlar.
+                  Müşterilerine veri destekli güçlü ve ikna edici analiz raporları sunan danışmanlar.
                 </p>
               </div>
             </div>
@@ -315,21 +314,14 @@ export function About() {
           </div>
 
           {/* Mobile Selector (Visible only on mobile) */}
-          <div className="block md:hidden max-w-xs mx-auto px-2">
-            <label htmlFor="mobile-about-tab" className="sr-only">Kullanıcı Segmenti Seçin</label>
-            <select
-              id="mobile-about-tab"
-              value={activeAudience}
-              onChange={(e) => setActiveAudience(e.target.value as any)}
-              className="w-full bg-white border border-gray-300 text-gray-800 rounded-xl px-4 py-3 text-xs font-extrabold shadow-sm focus:outline-none focus:ring-2 focus:ring-[#1a5c3a]/50 focus:border-[#1a5c3a] cursor-pointer appearance-none text-center"
-              style={{ backgroundImage: `url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%23374151' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E")`, backgroundPosition: 'right 12px center', backgroundSize: '1.25em 1.25em', backgroundRepeat: 'no-repeat', paddingRight: '2rem' }}
-            >
-              <option value="owner">👥 Mülk Sahipleri</option>
-              <option value="investor">📈 Yatırımcılar</option>
-              <option value="pro">🏆 Profesyoneller</option>
-              <option value="corporate">🏢 Kuruluşlar</option>
-              <option value="buyerseller">📄 Alıcı & Satıcılar</option>
-            </select>
+          <div className="block md:hidden max-w-lg mx-auto px-2">
+            <div className="grid grid-cols-3 gap-2">
+              <button onClick={() => setActiveAudience('owner')} className={`px-2 py-2 rounded-lg text-[9px] font-bold transition-all ${activeAudience === 'owner' ? 'bg-[#1a5c3a] text-white' : 'bg-white border border-gray-200 text-gray-600'}`}>👥 Mülk Sahibi</button>
+              <button onClick={() => setActiveAudience('investor')} className={`px-2 py-2 rounded-lg text-[9px] font-bold transition-all ${activeAudience === 'investor' ? 'bg-[#1a5c3a] text-white' : 'bg-white border border-gray-200 text-gray-600'}`}>📈 Yatırımcı</button>
+              <button onClick={() => setActiveAudience('pro')} className={`px-2 py-2 rounded-lg text-[9px] font-bold transition-all ${activeAudience === 'pro' ? 'bg-[#1a5c3a] text-white' : 'bg-white border border-gray-200 text-gray-600'}`}>🏆 Profesyonel</button>
+              <button onClick={() => setActiveAudience('corporate')} className={`px-2 py-2 rounded-lg text-[9px] font-bold transition-all ${activeAudience === 'corporate' ? 'bg-[#1a5c3a] text-white' : 'bg-white border border-gray-200 text-gray-600'}`}>🏢 Kuruluş</button>
+              <button onClick={() => setActiveAudience('buyerseller')} className={`px-2 py-2 rounded-lg text-[9px] font-bold transition-all ${activeAudience === 'buyerseller' ? 'bg-[#1a5c3a] text-white' : 'bg-white border border-gray-200 text-gray-600'}`}>📄 Alıcı & Satıcı</button>
+            </div>
           </div>
 
           {/* Mobile active tab content wrapper */}
@@ -382,7 +374,7 @@ export function About() {
                   </div>
                   <h4 className="text-xs font-extrabold text-gray-950 tracking-tight">PROFESYONELLER</h4>
                   <p className="text-[11px] text-gray-600 leading-relaxed px-2">
-                    Müşterilerine veri destekli güçlü ve ikna edici değerlendirme raporları sunan danışmanlar.
+                    Müşterilerine veri destekli güçlü ve ikna edici analiz raporları sunan danışmanlar.
                   </p>
                 </motion.div>
               )}
@@ -436,7 +428,7 @@ export function About() {
               </div>
               <h4 className="text-base font-bold text-gray-950 tracking-tight">Vizyonumuz</h4>
               <p className="text-xs text-gray-600 leading-relaxed">
-                Türkiye'nin en güvenilir dijital gayrimenkul analiz ve değerlendirme platformlarından biri olmak; gayrimenkul kararlarını veriye dayalı, şeffaf ve erişilebilir hale getirerek sektörde yeni bir standart oluşturmaktır.
+                Türkiye'nin en güvenilir dijital gayrimenkul analiz ve piyasa fiyat aralığı platformlarından biri olmak; gayrimenkul kararlarını veriye dayalı, şeffaf ve erişilebilir hale getirerek sektörde yeni bir standart oluşturmaktır.
               </p>
             </div>
           </div>
@@ -448,7 +440,7 @@ export function About() {
               </div>
               <h4 className="text-base font-bold text-gray-950 tracking-tight">Misyonumuz</h4>
               <p className="text-xs text-gray-600 leading-relaxed">
-                Teknolojiyi, uzmanlığı ve veriyi bir araya getirerek kullanıcılarımızın gayrimenkul kararlarını desteklemek; hızlı, anlaşılır ve güvenilir değerlendirme raporları sunmak.
+                Teknolojiyi, uzmanlığı ve veriyi bir araya getirerek kullanıcılarımızın gayrimenkul kararlarını desteklemek; hızlı, anlaşılır ve güvenilir analiz ve fiyat aralığı raporları sunmak.
               </p>
             </div>
           </div>
@@ -474,7 +466,7 @@ export function About() {
               </div>
               <h4 className="font-bold text-[11px] text-gray-950 tracking-tight">GÜVEN</h4>
               <p className="text-[10px] text-gray-500 leading-relaxed">
-                Her değerlendirmede objektif, bağımsız ve bilimsel standartlarda tutarlı bir metodoloji benimseriz.
+                Her analizde objektif, bağımsız ve bilimsel standartlarda tutarlı bir metodoloji benimseriz.
               </p>
             </div>
 
@@ -504,7 +496,7 @@ export function About() {
               </div>
               <h4 className="font-bold text-[11px] text-gray-950 tracking-tight">ERİŞİLEBİLİRLİK</h4>
               <p className="text-[10px] text-gray-500 leading-relaxed">
-                Karmaşık ve pahalı profesyonel değerlendirme süreçlerini herkes için bütçe dostu ve kolay hâle getiririz.
+                Karmaşık ve pahalı profesyonel gayrimenkul analiz süreçlerini herkes için bütçe dostu ve kolay hâle getiririz.
               </p>
             </div>
 
@@ -521,21 +513,14 @@ export function About() {
           </div>
 
           {/* Mobile Selector (Visible only on mobile) */}
-          <div className="block md:hidden max-w-xs mx-auto px-2">
-            <label htmlFor="mobile-values-tab" className="sr-only">Değer Seçin</label>
-            <select
-              id="mobile-values-tab"
-              value={activeValue}
-              onChange={(e) => setActiveValue(e.target.value as any)}
-              className="w-full bg-white border border-gray-300 text-gray-800 rounded-xl px-4 py-3 text-xs font-extrabold shadow-sm focus:outline-none focus:ring-2 focus:ring-[#f0a500]/50 focus:border-[#f0a500] cursor-pointer appearance-none text-center"
-              style={{ backgroundImage: `url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%23374151' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E")`, backgroundPosition: 'right 12px center', backgroundSize: '1.25em 1.25em', backgroundRepeat: 'no-repeat', paddingRight: '2rem' }}
-            >
-              <option value="trust">🛡️ Güven</option>
-              <option value="transparency">🧩 Şeffaflık</option>
-              <option value="innovation">✨ Yenilikçilik</option>
-              <option value="accessibility">⚖️ Erişilebilirlik</option>
-              <option value="responsibility">🎯 Sorumluluk</option>
-            </select>
+          <div className="block md:hidden max-w-lg mx-auto px-2">
+            <div className="grid grid-cols-3 gap-2">
+              <button onClick={() => setActiveValue('trust')} className={`px-2 py-2 rounded-lg text-[9px] font-bold transition-all ${activeValue === 'trust' ? 'bg-[#f0a500] text-gray-950' : 'bg-white border border-gray-200 text-gray-600'}`}>🛡️ Güven</button>
+              <button onClick={() => setActiveValue('transparency')} className={`px-2 py-2 rounded-lg text-[9px] font-bold transition-all ${activeValue === 'transparency' ? 'bg-[#f0a500] text-gray-950' : 'bg-white border border-gray-200 text-gray-600'}`}>🧩 Şeffaflık</button>
+              <button onClick={() => setActiveValue('innovation')} className={`px-2 py-2 rounded-lg text-[9px] font-bold transition-all ${activeValue === 'innovation' ? 'bg-[#f0a500] text-gray-950' : 'bg-white border border-gray-200 text-gray-600'}`}>✨ Yenilikçilik</button>
+              <button onClick={() => setActiveValue('accessibility')} className={`px-2 py-2 rounded-lg text-[9px] font-bold transition-all ${activeValue === 'accessibility' ? 'bg-[#f0a500] text-gray-950' : 'bg-white border border-gray-200 text-gray-600'}`}>⚖️ Erişilebilirlik</button>
+              <button onClick={() => setActiveValue('responsibility')} className={`px-2 py-2 rounded-lg text-[9px] font-bold transition-all ${activeValue === 'responsibility' ? 'bg-[#f0a500] text-gray-950' : 'bg-white border border-gray-200 text-gray-600'}`}>🎯 Sorumluluk</button>
+            </div>
           </div>
 
           {/* Mobile active value content wrapper */}
@@ -554,7 +539,7 @@ export function About() {
                   </div>
                   <h4 className="text-xs font-extrabold text-gray-950 tracking-tight">GÜVEN</h4>
                   <p className="text-[11px] text-gray-600 leading-relaxed px-2">
-                    Her değerlendirmede objektif, bağımsız ve bilimsel standartlarda tutarlı bir metodoloji benimseriz.
+                    Her analizde objektif, bağımsız ve bilimsel standartlarda tutarlı bir metodoloji benimseriz.
                   </p>
                 </motion.div>
               )}
@@ -605,7 +590,7 @@ export function About() {
                   </div>
                   <h4 className="text-xs font-extrabold text-gray-950 tracking-tight">ERİŞİLEBİLİRLİK</h4>
                   <p className="text-[11px] text-gray-600 leading-relaxed px-2">
-                    Karmaşık ve pahalı profesyonel değerlendirme süreçlerini herkes için bütçe dostu ve kolay hâle getiririz.
+                    Karmaşık ve pahalı profesyonel analiz süreçlerini herkes için bütçe dostu ve kolay hâle getiririz.
                   </p>
                 </motion.div>
               )}

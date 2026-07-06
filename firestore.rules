@@ -27,5 +27,11 @@ service cloud.firestore {
       allow update: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
       allow delete: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
     }
+
+    // Counters collection
+    match /counters/{counterId} {
+      allow read: if true;
+      allow write: if true;
+    }
   }
 }

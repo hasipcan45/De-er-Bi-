@@ -26,6 +26,7 @@ export function Admin({ requests, onLogout, onUpdateRequest, onNavigate, current
   const [activeTab, setActiveTab] = useState<'dashboard' | 'requests' | 'users' | 'detail'>('dashboard');
   const [selectedRequest, setSelectedRequest] = useState<AppraisalRequest | null>(null);
   const [selectedStatus, setSelectedStatus] = useState<ReportStatus>('new');
+  const [selectedPaymentStatus, setSelectedPaymentStatus] = useState<'completed' | 'pending' | 'free'>('pending');
   
   // Floating dynamic toast notifications
   const [notification, setNotification] = useState<{ message: string; type: 'success' | 'info' } | null>(null);
@@ -38,9 +39,6 @@ export function Admin({ requests, onLogout, onUpdateRequest, onNavigate, current
 
   const [editingUser, setEditingUser] = useState<any | null>(null);
   const [editMembership, setEditMembership] = useState<string>('free');
-  const [editExtraQuotaKonut, setEditExtraQuotaKonut] = useState<number>(0);
-  const [editExtraQuotaArsa, setEditExtraQuotaArsa] = useState<number>(0);
-  const [editExtraQuotaTicari, setEditExtraQuotaTicari] = useState<number>(0);
 
   const pendingCount = requests.filter(r => r.status === 'new').length;
   const preparingCount = requests.filter(r => r.status === 'preparing').length;
@@ -100,6 +98,7 @@ export function Admin({ requests, onLogout, onUpdateRequest, onNavigate, current
   useEffect(() => {
     if (selectedRequest) {
       setSelectedStatus(selectedRequest.status);
+      setSelectedPaymentStatus(selectedRequest.paymentStatus || 'pending');
     }
   }, [selectedRequest]);
 
@@ -147,6 +146,19 @@ export function Admin({ requests, onLogout, onUpdateRequest, onNavigate, current
     triggerToast(`Talep durumu başarıyla "${txt}" olarak güncellendi!`);
   };
 
+  const handlePaymentStatusUpdate = (payStatus: 'completed' | 'pending' | 'free') => {
+    if (!selectedRequest) return;
+    const updated: AppraisalRequest = {
+      ...selectedRequest,
+      paymentStatus: payStatus,
+      isPaid: payStatus === 'completed' || payStatus === 'free'
+    };
+    onUpdateRequest(updated);
+    setSelectedRequest(updated);
+    setSelectedPaymentStatus(payStatus);
+    triggerToast(`Ödeme durumu güncellendi!`);
+  };
+
   const handleSimulatePdfUpload = () => {
     if (!selectedRequest) return;
     
@@ -155,12 +167,12 @@ export function Admin({ requests, onLogout, onUpdateRequest, onNavigate, current
       ...selectedRequest,
       status: 'done', // auto set status to done when PDF is uploaded
       pdfUrl: '#', // Simply triggers profile download HTML engine beautifully
-      pdfName: 'Otomatik_Değerleme_Föyü.html'
+      pdfName: 'Otomatik_Analiz_Raporu.html'
     };
     setSelectedStatus('done');
     onUpdateRequest(updated);
     setSelectedRequest(updated); // Sync local detail view
-    triggerToast('Değerleme raporu başarıyla onaylandı ve indirilmeye hazır hale getirildi!');
+    triggerToast('Analiz raporu başarıyla onaylandı ve indirilmeye hazır hale getirildi!');
   };
 
   const handleRealPdfUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -168,7 +180,7 @@ export function Admin({ requests, onLogout, onUpdateRequest, onNavigate, current
     const file = e.target.files[0];
     
     if (!file.name.toLowerCase().endsWith('.pdf')) {
-      triggerToast('Lütfen sadece PDF formatında bir değerleme raporu yükleyin.');
+      triggerToast('Lütfen sadece PDF formatında bir analiz raporu yükleyin.');
       return;
     }
 
@@ -185,7 +197,7 @@ export function Admin({ requests, onLogout, onUpdateRequest, onNavigate, current
         setSelectedStatus('done');
         onUpdateRequest(updated);
         setSelectedRequest(updated);
-        triggerToast(`"${file.name}" adlı PDF değerleme raporunuz başarıyla yüklendi!`);
+        triggerToast(`"${file.name}" adlı PDF analiz raporunuz başarıyla yüklendi!`);
       }
     };
     reader.readAsDataURL(file);
@@ -200,7 +212,7 @@ export function Admin({ requests, onLogout, onUpdateRequest, onNavigate, current
     };
     onUpdateRequest(updated);
     setSelectedRequest(updated);
-    triggerToast('Yüklenmiş değerleme raporu dosyası başarıyla kaldırıldı.');
+    triggerToast('Yüklenmiş analiz raporu dosyası başarıyla kaldırıldı.');
   };
 
   const handleSaveUserMembership = (e: React.FormEvent) => {
@@ -210,10 +222,7 @@ export function Admin({ requests, onLogout, onUpdateRequest, onNavigate, current
     // Update users database state locally
     const updatedUsers = users.map(u => u.id === editingUser.id ? { 
       ...u, 
-      membership: editMembership,
-      extraQuotaKonut: editExtraQuotaKonut,
-      extraQuotaArsa: editExtraQuotaArsa,
-      extraQuotaTicari: editExtraQuotaTicari
+      membership: editMembership
     } : u);
     onUpdateUsers(updatedUsers);
 
@@ -221,10 +230,7 @@ export function Admin({ requests, onLogout, onUpdateRequest, onNavigate, current
     if (currentUser && (editingUser.email.toLowerCase() === currentUser.email.toLowerCase() || editingUser.id === currentUser.id)) {
       onUpdateCurrentUser?.({
         ...currentUser,
-        membershipType: editMembership as any,
-        extraQuotaKonut: editExtraQuotaKonut,
-        extraQuotaArsa: editExtraQuotaArsa,
-        extraQuotaTicari: editExtraQuotaTicari
+        membershipType: editMembership as any
       });
     }
 
@@ -238,7 +244,7 @@ export function Admin({ requests, onLogout, onUpdateRequest, onNavigate, current
       }
     });
 
-    triggerToast(`"${editingUser.name}" kullanıcısının paket ve kota bilgileri başarıyla güncellendi!`);
+    triggerToast(`"${editingUser.name}" kullanıcısının üyelik durumu başarıyla güncellendi!`);
     setEditingUser(null);
   };
 
@@ -438,23 +444,21 @@ export function Admin({ requests, onLogout, onUpdateRequest, onNavigate, current
                   <DetailRow label="Tarih" value={`${new Date(selectedRequest.createdAt).toLocaleDateString('tr-TR')} ${new Date(selectedRequest.createdAt).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}`} />
                   <DetailRow label="Tür" value={<span className="capitalize">{selectedRequest.type === 'konut' ? 'Konut' : selectedRequest.type === 'arsa' ? 'Arsa / Arazi' : 'Ticari'}</span>} />
                   <DetailRow 
-                    label="Üyelik Türü" 
+                    label="Talep Edilen Paket" 
                     value={
-                      <span className={`px-2.5 py-0.5 rounded-full text-[10.5px] font-bold tracking-wider border ${
-                        selectedRequest.userMembership === 'guest' || (!selectedRequest.userMembership && !selectedRequest.userId)
-                          ? 'bg-amber-50 text-amber-750 border-amber-100'
-                          : 'bg-[#1a5c3a]/5 text-[#1a5c3a] border-[#1a5c3a]/10'
-                      }`}>
-                        {selectedRequest.userMembership === 'guest' || (!selectedRequest.userMembership && !selectedRequest.userId)
-                          ? 'MİSAFİR'
-                          : selectedRequest.userMembership === 'free'
-                            ? 'STANDART ÜYE'
-                            : selectedRequest.userMembership === 'monthly'
-                              ? 'AYLIK ÜYE'
-                              : selectedRequest.userMembership === 'yearly'
-                                ? 'YILLIK ÜYE'
-                                : 'KAYITLI ÜYE'}
-                      </span>
+                      selectedRequest.selectedPackage ? (
+                        <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold tracking-wider border ${
+                          selectedRequest.selectedPackage === 'Orta'
+                            ? 'bg-amber-50 text-amber-850 border-amber-200'
+                            : selectedRequest.selectedPackage === 'Profesyonel'
+                              ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                              : 'bg-slate-50 text-slate-700 border-slate-200'
+                        }`}>
+                          {selectedRequest.selectedPackage.toUpperCase()} ANALİZ
+                        </span>
+                      ) : (
+                        <span className="text-xs text-gray-400 italic">Belirtilmedi</span>
+                      )
                     } 
                   />
                 </DetailCard>
@@ -586,27 +590,74 @@ export function Admin({ requests, onLogout, onUpdateRequest, onNavigate, current
                 </DetailCard>
 
                 <DetailCard title="Durum Yönetimi">
-                  <div className="space-y-4">
+                  <div className="space-y-5">
+                    {/* Ödeme Durumu Güncelleme */}
                     <div>
-                      <label className="text-[10px] font-bold text-gray-400 tracking-widest mb-1.5 block">DURUM GÜNCELLE</label>
+                      <label className="text-[10px] font-black text-gray-400 tracking-widest mb-1.5 block">ÖDEME GÜNCELLE</label>
                       <select 
-                        value={selectedStatus}
-                        onChange={(e) => setSelectedStatus(e.target.value as ReportStatus)}
-                        className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-hidden focus:ring-1 focus:ring-[#1a5c3a]"
+                        value={selectedPaymentStatus}
+                        onChange={(e) => handlePaymentStatusUpdate(e.target.value as 'completed' | 'pending' | 'free')}
+                        className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-xs md:text-sm text-gray-800 font-semibold focus:outline-hidden focus:ring-1 focus:ring-[#1a5c3a] cursor-pointer"
                       >
-                        <option value="new">Talep Alındı (Yeni)</option>
-                        <option value="preparing">Rapor Hazırlanıyor</option>
-                        <option value="done">Rapor Tamamlandı</option>
-                        <option value="cancelled">İptal Edildi</option>
+                        <option value="pending">Ödeme Alınmadı</option>
+                        <option value="completed">Ödeme Alındı</option>
+                        <option value="free">Ücretsiz Rapor</option>
                       </select>
                     </div>
 
-                    <button 
-                      onClick={handleStatusUpdate}
-                      className="w-full py-2.5 bg-[#1a5c3a] text-white rounded-xl text-xs font-bold hover:bg-[#2d8a58] active:scale-[0.98] transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-md shadow-emerald-950/10"
-                    >
-                      Kabul Et ve Durumu Güncelle
-                    </button>
+                    <div className="border-t border-gray-100 my-1"></div>
+
+                    {/* Durum Güncelleme */}
+                    <div className="space-y-4">
+                      <div>
+                        <div className="flex items-center justify-between mb-1.5">
+                          <label className="text-[10px] font-black text-gray-400 tracking-widest block">DURUM GÜNCELLE</label>
+                          {selectedPaymentStatus === 'pending' && (
+                            <span className="text-[9px] bg-red-50 text-red-600 font-bold px-2 py-0.5 rounded-full tracking-wide">
+                              ÖDEME BEKLENİYOR
+                            </span>
+                          )}
+                        </div>
+                        <select 
+                          value={selectedStatus}
+                          onChange={(e) => setSelectedStatus(e.target.value as ReportStatus)}
+                          disabled={selectedPaymentStatus === 'pending'}
+                          className={`w-full border rounded-xl px-4 py-2.5 text-xs md:text-sm text-gray-800 font-semibold focus:outline-hidden focus:ring-1 focus:ring-[#1a5c3a] ${
+                            selectedPaymentStatus === 'pending'
+                              ? 'bg-gray-100 border-gray-150 text-gray-400 cursor-not-allowed'
+                              : 'bg-white border-gray-200 cursor-pointer'
+                          }`}
+                        >
+                          <option value="new">Talep Alındı (Yeni)</option>
+                          <option value="preparing">Rapor Hazırlanıyor</option>
+                          <option value="done">Rapor Tamamlandı</option>
+                          <option value="cancelled">İptal Edildi</option>
+                        </select>
+                      </div>
+
+                      {selectedPaymentStatus === 'pending' ? (
+                        <div className="bg-amber-50/70 border border-amber-100 rounded-2xl p-4 text-xs text-amber-800 space-y-1.5">
+                          <p className="font-extrabold flex items-center gap-1.5">
+                            <span>⚠️ Ödeme Alınmadı</span>
+                          </p>
+                          <p className="text-[11px] leading-relaxed font-medium">
+                            Durumu güncelleyebilmek için öncelikle yukarıdan ödeme seçeneğini <strong>"Ödeme Alındı"</strong> olarak işaretlemelisiniz.
+                          </p>
+                        </div>
+                      ) : null}
+
+                      <button 
+                        onClick={handleStatusUpdate}
+                        disabled={selectedPaymentStatus === 'pending'}
+                        className={`w-full py-2.5 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                          selectedPaymentStatus === 'pending'
+                            ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                            : 'bg-[#1a5c3a] hover:bg-[#2d8a58] active:scale-[0.98] cursor-pointer shadow-md shadow-emerald-950/10'
+                        }`}
+                      >
+                        Kabul Et ve Durumu Güncelle
+                      </button>
+                    </div>
 
                     <div className="border-t border-gray-100 pt-4 mt-2 space-y-3">
                       <label className="text-[10px] font-bold text-gray-400 tracking-widest block">RAPOR YÜKLE / ATA</label>
@@ -615,8 +666,8 @@ export function Admin({ requests, onLogout, onUpdateRequest, onNavigate, current
                         <div className="bg-emerald-50 border border-emerald-100 p-3 rounded-xl flex items-center justify-between text-xs">
                           <div className="flex items-center gap-1.5 overflow-hidden">
                             <FileText size={14} className="text-[#1a5c3a] shrink-0" />
-                            <span className="text-[#1a5c3a] font-medium truncate max-w-[150px]" title={selectedRequest.pdfName || 'Değerleme Raporu'}>
-                              {selectedRequest.pdfName || 'Değerleme_Raporu.pdf'}
+                            <span className="text-[#1a5c3a] font-medium truncate max-w-[150px]" title={selectedRequest.pdfName || 'Analiz Raporu'}>
+                              {selectedRequest.pdfName || 'Analiz_Raporu.pdf'}
                             </span>
                           </div>
                           <div className="flex items-center gap-2">
@@ -730,15 +781,11 @@ export function Admin({ requests, onLogout, onUpdateRequest, onNavigate, current
                       <div className="flex items-center justify-between">
                         <span className="font-bold text-gray-900 text-sm">{row.name}</span>
                         <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold tracking-wider border ${
-                          row.membership === 'monthly'
-                            ? 'bg-blue-50 text-blue-700 border-blue-150'
-                            : row.membership === 'yearly'
-                              ? 'bg-emerald-50 text-emerald-800 border-emerald-150'
-                              : row.membership === 'guest'
-                                ? 'bg-amber-50 text-amber-700 border-amber-150'
-                                : 'bg-gray-100 text-gray-600 border-gray-150'
+                          row.membership === 'guest'
+                            ? 'bg-amber-50 text-amber-700 border-amber-150'
+                            : 'bg-emerald-50 text-emerald-800 border-emerald-150'
                         }`}>
-                          {row.membership === 'free' ? 'STANDART' : row.membership === 'monthly' ? 'AYLIK' : row.membership === 'yearly' ? 'YILLIK' : 'MİSAFİR'}
+                          {row.membership === 'guest' ? 'MİSAFİR' : 'ÜYE'}
                         </span>
                       </div>
                       
@@ -755,56 +802,6 @@ export function Admin({ requests, onLogout, onUpdateRequest, onNavigate, current
                           <span className="text-gray-400">Kayıt:</span>
                           <span className="text-gray-500">{row.date}</span>
                         </div>
-
-                        {/* Quota Usage display */}
-                        <div className="pt-2 border-t border-gray-150/60">
-                          {(() => {
-                            const userReqs = requests.filter(r => r.userId === row.id);
-                            const konutCount = userReqs.filter(r => r.type === 'konut').length;
-                            const arsaCount = userReqs.filter(r => r.type === 'arsa').length;
-                            const ticariCount = userReqs.filter(r => r.type === 'ticari').length;
-                            const totalCount = userReqs.length;
-
-                            const getLimitForType = (type: string, membership: string) => {
-                              if (row.activeSubscription && row.activeSubscription.quota) {
-                                const qVal = row.activeSubscription.quota[type as keyof typeof row.activeSubscription.quota] || 0;
-                                const extra = type === 'konut' ? (row.extraQuotaKonut || 0) : type === 'arsa' ? (row.extraQuotaArsa || 0) : (row.extraQuotaTicari || 0);
-                                return qVal + extra;
-                              }
-                              let base = 0;
-                              if (membership === 'monthly') {
-                                if (type === 'konut') base = 3;
-                                if (type === 'arsa') base = 2;
-                                if (type === 'ticari') base = 1;
-                              }
-                              if (membership === 'yearly') {
-                                if (type === 'konut') base = 36;
-                                if (type === 'arsa') base = 24;
-                                if (type === 'ticari') base = 12;
-                              }
-                              const extra = type === 'konut' ? (row.extraQuotaKonut || 0) : type === 'arsa' ? (row.extraQuotaArsa || 0) : (row.extraQuotaTicari || 0);
-                              return base + extra;
-                            };
-
-                            const hasExtra = !!(row.extraQuotaKonut || row.extraQuotaArsa || row.extraQuotaTicari);
-                            if ((row.membership === 'free' || row.membership === 'guest') && !hasExtra) {
-                              return (
-                                <span className="text-[10px] text-gray-400 block">Kullanım: {totalCount} Rapor (Paketsiz)</span>
-                              );
-                            }
-
-                            return (
-                              <div className="text-[10px] text-gray-500 space-y-0.5 mt-1 bg-white p-2 rounded border border-gray-150">
-                                <span className="font-semibold block text-gray-700">Kullanılan Kotalar {hasExtra && <span className="text-[8px] bg-emerald-50 text-emerald-700 px-1 py-0.5 rounded border border-emerald-100 font-normal ml-1">Ek Kota Dahil</span>}:</span>
-                                <div className="flex gap-2 justify-between">
-                                  <span>Konut: {konutCount}/{getLimitForType('konut', row.membership)}</span>
-                                  <span>Arsa: {arsaCount}/{getLimitForType('arsa', row.membership)}</span>
-                                  <span>Ticari: {ticariCount}/{getLimitForType('ticari', row.membership)}</span>
-                                </div>
-                              </div>
-                            );
-                          })()}
-                        </div>
                       </div>
                       
                       <div className="pt-2 border-t border-gray-100 flex justify-end">
@@ -812,9 +809,6 @@ export function Admin({ requests, onLogout, onUpdateRequest, onNavigate, current
                           onClick={() => {
                             setEditingUser(row);
                             setEditMembership(row.membership);
-                            setEditExtraQuotaKonut(row.extraQuotaKonut || 0);
-                            setEditExtraQuotaArsa(row.extraQuotaArsa || 0);
-                            setEditExtraQuotaTicari(row.extraQuotaTicari || 0);
                           }}
                           className="px-3 py-1 bg-[#1a5c3a] text-white rounded-lg text-xs font-bold hover:bg-[#207047] cursor-pointer"
                         >
@@ -833,7 +827,7 @@ export function Admin({ requests, onLogout, onUpdateRequest, onNavigate, current
                         <th className="px-6 py-4 font-medium text-gray-500 tracking-widest text-[10px]">AD SOYAD</th>
                         <th className="px-6 py-4 font-medium text-gray-500 tracking-widest text-[10px]">E-POSTA</th>
                         <th className="px-6 py-4 font-medium text-gray-500 tracking-widest text-[10px]">MOBİL TELEFON</th>
-                        <th className="px-6 py-4 font-medium text-gray-500 tracking-widest text-[10px]">ÜYELİK LİSANSI</th>
+                        <th className="px-6 py-4 font-medium text-gray-500 tracking-widest text-[10px]">ÜYELİK DURUMU</th>
                         <th className="px-6 py-4 font-medium text-gray-500 tracking-widest text-[10px]">KAYIT TARİHİ</th>
                         <th className="px-6 py-4 font-medium text-gray-500 tracking-widest text-[10px]">İŞLEM</th>
                       </tr>
@@ -845,60 +839,13 @@ export function Admin({ requests, onLogout, onUpdateRequest, onNavigate, current
                           <td className="px-6 py-4 text-[#1a5c3a] font-medium">{row.email}</td>
                           <td className="px-6 py-4 text-xs text-gray-500">{row.phone || '—'}</td>
                           <td className="px-6 py-4">
-                            <div className="space-y-1">
-                              <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider border ${
-                                row.membership === 'monthly'
-                                  ? 'bg-blue-50 text-blue-700 border-blue-150'
-                                  : row.membership === 'yearly'
-                                    ? 'bg-emerald-50 text-emerald-800 border-emerald-150'
-                                    : row.membership === 'guest'
-                                      ? 'bg-amber-50 text-amber-700 border-amber-150'
-                                      : 'bg-gray-100 text-gray-600 border-gray-150'
-                              }`}>
-                                {row.membership === 'free' ? 'STANDART' : row.membership === 'monthly' ? 'AYLIK' : row.membership === 'yearly' ? 'YILLIK' : 'MİSAFİR'}
-                              </span>
-                              {(() => {
-                                const userReqs = requests.filter(r => r.userId === row.id);
-                                const konutCount = userReqs.filter(r => r.type === 'konut').length;
-                                const arsaCount = userReqs.filter(r => r.type === 'arsa').length;
-                                 const ticariCount = userReqs.filter(r => r.type === 'ticari').length;
-                                 const totalCount = userReqs.length;
-                                 const getLimitForType = (type: string, membership: string) => {
-                                  if (row.activeSubscription && row.activeSubscription.quota) {
-                                    const qVal = row.activeSubscription.quota[type as keyof typeof row.activeSubscription.quota] || 0;
-                                    const extra = type === 'konut' ? (row.extraQuotaKonut || 0) : type === 'arsa' ? (row.extraQuotaArsa || 0) : (row.extraQuotaTicari || 0);
-                                    return qVal + extra;
-                                  }
-                                  let base = 0;
-                                  if (membership === 'monthly') {
-                                    if (type === 'konut') base = 3;
-                                    if (type === 'arsa') base = 2;
-                                    if (type === 'ticari') base = 1;
-                                  }
-                                  if (membership === 'yearly') {
-                                    if (type === 'konut') base = 36;
-                                    if (type === 'arsa') base = 24;
-                                    if (type === 'ticari') base = 12;
-                                  }
-                                  const extra = type === 'konut' ? (row.extraQuotaKonut || 0) : type === 'arsa' ? (row.extraQuotaArsa || 0) : (row.extraQuotaTicari || 0);
-                                  return base + extra;
-                                };
-
-                                const hasExtra = !!(row.extraQuotaKonut || row.extraQuotaArsa || row.extraQuotaTicari);
-                                if ((row.membership === 'free' || row.membership === 'guest') && !hasExtra) {
-                                  return (
-                                    <span className="text-[10px] text-gray-400 block font-medium">Toplam: {totalCount} Rapor</span>
-                                  );
-                                }
-
-                                return (
-                                  <div className="text-[9px] text-gray-500 whitespace-nowrap bg-gray-50 p-1.5 rounded border border-gray-100 font-medium">
-                                    Konut: {konutCount}/{getLimitForType('konut', row.membership)} | Arsa: {arsaCount}/{getLimitForType('arsa', row.membership)} | Ticari: {ticariCount}/{getLimitForType('ticari', row.membership)}
-                                    {hasExtra && <span className="ml-1.5 text-[8px] font-bold text-emerald-700 bg-emerald-50 px-1 py-0.5 rounded border border-emerald-100">Ek Kota</span>}
-                                  </div>
-                                );
-                              })()}
-                            </div>
+                            <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider border ${
+                              row.membership === 'guest'
+                                ? 'bg-amber-50 text-amber-700 border-amber-150'
+                                : 'bg-emerald-50 text-emerald-800 border-emerald-150'
+                            }`}>
+                              {row.membership === 'guest' ? 'MİSAFİR' : 'ÜYE'}
+                            </span>
                           </td>
                           <td className="px-6 py-4 text-xs text-gray-500">{row.date}</td>
                           <td className="px-6 py-4">
@@ -906,9 +853,6 @@ export function Admin({ requests, onLogout, onUpdateRequest, onNavigate, current
                               onClick={() => {
                                 setEditingUser(row);
                                 setEditMembership(row.membership);
-                                setEditExtraQuotaKonut(row.extraQuotaKonut || 0);
-                                setEditExtraQuotaArsa(row.extraQuotaArsa || 0);
-                                setEditExtraQuotaTicari(row.extraQuotaTicari || 0);
                               }}
                               className="text-[#1a5c3a] hover:text-[#207047] font-bold hover:underline cursor-pointer"
                             >
@@ -938,119 +882,20 @@ export function Admin({ requests, onLogout, onUpdateRequest, onNavigate, current
               exit={{ scale: 0.95, opacity: 0 }}
               className="bg-white rounded-3xl p-6 md:p-8 max-w-md w-full shadow-2xl border border-gray-100 relative"
             >
-              <h3 className="text-md font-black text-gray-950 tracking-tight mb-2">Kullanıcı Paket & Kota Düzenleme</h3>
-              <p className="text-xs text-gray-500 mb-6">"<strong>{editingUser.name}</strong>" ({editingUser.email}) isimli kullanıcının paket ve ek kotalarını düzenleyin.</p>
+              <h3 className="text-md font-black text-gray-950 tracking-tight mb-2">Kullanıcı Üyelik Tipi Düzenleme</h3>
+              <p className="text-xs text-gray-500 mb-6">"<strong>{editingUser.name}</strong>" ({editingUser.email}) isimli kullanıcının üyelik tipini düzenleyin.</p>
               
               <form onSubmit={handleSaveUserMembership} className="space-y-5">
                 <div>
-                  <label className="text-[10px] uppercase font-black text-gray-400 tracking-widest ml-1 block mb-2">LİSANS PAKETİ</label>
+                  <label className="text-[10px] uppercase font-black text-gray-400 tracking-widest ml-1 block mb-2">ÜYELİK TİPİ</label>
                   <select
                     value={editMembership}
                     onChange={(e) => setEditMembership(e.target.value)}
                     className="w-full bg-gray-50 border border-gray-250 focus:border-[#1a5c3a] focus:outline-hidden rounded-xl px-4 py-2.5 text-xs md:text-sm text-gray-800 font-semibold focus:ring-1 focus:ring-[#1a5c3a] cursor-pointer"
                   >
-                    <option value="guest">Misafir (Talep Başına Ödeme)</option>
-                    <option value="free">Standart (Ücretsiz Kayıtlı)</option>
-                    <option value="monthly">Profesyonel Aylık Abonelik</option>
-                    <option value="yearly">Profesyonel Yıllık Paket</option>
+                    <option value="guest">Misafir (Kayıtsız Kullanıcı)</option>
+                    <option value="free">Standart Üye (Kayıtlı Kullanıcı)</option>
                   </select>
-                </div>
-
-                <div className="border-t border-gray-100 pt-4">
-                  <label className="text-[10px] uppercase font-black text-gray-400 tracking-widest ml-1 block mb-1">EKSTRA KOTALAR (EK RAPOR HAKKI)</label>
-                  <p className="text-[10px] text-gray-400 mb-3">Paket limitlerine ek olarak verilecek (artırılacak) veya azaltılacak analiz haklarını tanımlayın.</p>
-                  
-                  <div className="space-y-3">
-                    {/* Konut Ek Kota */}
-                    <div className="flex items-center justify-between bg-gray-50 p-2.5 rounded-xl border border-gray-200">
-                      <div className="flex flex-col">
-                        <span className="text-xs font-bold text-gray-800">Konut Ek Kotası</span>
-                        <span className="text-[9px] text-gray-400">Rapor Hak Sayısı</span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <button
-                          type="button"
-                          onClick={() => setEditExtraQuotaKonut(prev => Math.max(0, prev - 1))}
-                          className="w-7 h-7 bg-white hover:bg-gray-100 border border-gray-300 rounded-lg text-gray-600 font-black flex items-center justify-center transition-colors text-xs cursor-pointer select-none"
-                        >
-                          -
-                        </button>
-                        <input
-                          type="number"
-                          value={editExtraQuotaKonut}
-                          onChange={(e) => setEditExtraQuotaKonut(Math.max(0, parseInt(e.target.value) || 0))}
-                          className="w-12 h-7 bg-white border border-gray-300 rounded-lg text-center font-bold text-xs focus:outline-hidden focus:ring-1 focus:ring-[#1a5c3a]"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setEditExtraQuotaKonut(prev => prev + 1)}
-                          className="w-7 h-7 bg-white hover:bg-gray-100 border border-gray-300 rounded-lg text-gray-600 font-black flex items-center justify-center transition-colors text-xs cursor-pointer select-none"
-                        >
-                          +
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Arsa Ek Kota */}
-                    <div className="flex items-center justify-between bg-gray-50 p-2.5 rounded-xl border border-gray-200">
-                      <div className="flex flex-col">
-                        <span className="text-xs font-bold text-gray-800">Arsa Ek Kotası</span>
-                        <span className="text-[9px] text-gray-400">Rapor Hak Sayısı</span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <button
-                          type="button"
-                          onClick={() => setEditExtraQuotaArsa(prev => Math.max(0, prev - 1))}
-                          className="w-7 h-7 bg-white hover:bg-gray-100 border border-gray-300 rounded-lg text-gray-600 font-black flex items-center justify-center transition-colors text-xs cursor-pointer select-none"
-                        >
-                          -
-                        </button>
-                        <input
-                          type="number"
-                          value={editExtraQuotaArsa}
-                          onChange={(e) => setEditExtraQuotaArsa(Math.max(0, parseInt(e.target.value) || 0))}
-                          className="w-12 h-7 bg-white border border-gray-300 rounded-lg text-center font-bold text-xs focus:outline-hidden focus:ring-1 focus:ring-[#1a5c3a]"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setEditExtraQuotaArsa(prev => prev + 1)}
-                          className="w-7 h-7 bg-white hover:bg-gray-100 border border-gray-300 rounded-lg text-gray-600 font-black flex items-center justify-center transition-colors text-xs cursor-pointer select-none"
-                        >
-                          +
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Ticari Ek Kota */}
-                    <div className="flex items-center justify-between bg-gray-50 p-2.5 rounded-xl border border-gray-200">
-                      <div className="flex flex-col">
-                        <span className="text-xs font-bold text-gray-800">Ticari Ek Kotası</span>
-                        <span className="text-[9px] text-gray-400">Rapor Hak Sayısı</span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <button
-                          type="button"
-                          onClick={() => setEditExtraQuotaTicari(prev => Math.max(0, prev - 1))}
-                          className="w-7 h-7 bg-white hover:bg-gray-100 border border-gray-300 rounded-lg text-gray-600 font-black flex items-center justify-center transition-colors text-xs cursor-pointer select-none"
-                        >
-                          -
-                        </button>
-                        <input
-                          type="number"
-                          value={editExtraQuotaTicari}
-                          onChange={(e) => setEditExtraQuotaTicari(Math.max(0, parseInt(e.target.value) || 0))}
-                          className="w-12 h-7 bg-white border border-gray-300 rounded-lg text-center font-bold text-xs focus:outline-hidden focus:ring-1 focus:ring-[#1a5c3a]"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setEditExtraQuotaTicari(prev => prev + 1)}
-                          className="w-7 h-7 bg-white hover:bg-gray-100 border border-gray-300 rounded-lg text-gray-600 font-black flex items-center justify-center transition-colors text-xs cursor-pointer select-none"
-                        >
-                          +
-                        </button>
-                      </div>
-                    </div>
-                  </div>
                 </div>
 
                 <div className="flex gap-2.5 pt-4 border-t border-gray-100">
@@ -1133,6 +978,18 @@ function RequestTable({
                 <p className="text-[10px] text-gray-500 mt-1 font-medium">
                   {req.data.city} / {req.data.district}
                 </p>
+                
+                {req.selectedPackage && (
+                  <span className={`inline-block mt-1.5 px-2 py-0.5 rounded text-[9px] font-extrabold border ${
+                    req.selectedPackage === 'Orta'
+                      ? 'bg-amber-50 text-amber-850 border-amber-150'
+                      : req.selectedPackage === 'Profesyonel'
+                        ? 'bg-emerald-50 text-emerald-850 border-emerald-150'
+                        : 'bg-slate-50 text-slate-700 border-slate-150'
+                  }`}>
+                    {req.selectedPackage.toUpperCase()} ANALİZ
+                  </span>
+                )}
               </div>
               
               <button 
@@ -1153,6 +1010,7 @@ function RequestTable({
             <tr className="bg-gray-50/50 border-b border-gray-100 text-left">
               <th className="px-6 py-4 font-medium text-gray-500 tracking-widest text-[10px]">TALEP NO</th>
               <th className="px-6 py-4 font-medium text-gray-500 tracking-widest text-[10px]">KULLANICI</th>
+              <th className="px-6 py-4 font-medium text-gray-500 tracking-widest text-[10px]">PAKET</th>
               <th className="px-6 py-4 font-medium text-gray-500 tracking-widest text-[10px]">TARİH</th>
               <th className="px-6 py-4 font-medium text-gray-500 tracking-widest text-[10px]">DURUM</th>
               <th className="px-6 py-4 font-medium text-gray-500 tracking-widest text-[10px]">İŞLEM</th>
@@ -1162,7 +1020,25 @@ function RequestTable({
             {requests.map((req) => (
               <tr key={req.id} className="hover:bg-gray-50/50 transition-colors">
                 <td className="px-6 py-4 font-medium text-gray-900">{req.id}</td>
-                <td className="px-6 py-4">{req.contact.fullName}</td>
+                <td className="px-6 py-4">
+                  <div className="font-semibold text-gray-900">{req.contact.fullName}</div>
+                  <div className="text-[10px] text-gray-400 font-medium">{req.contact.email}</div>
+                </td>
+                <td className="px-6 py-4">
+                  {req.selectedPackage ? (
+                    <span className={`inline-block px-2.5 py-0.5 rounded text-[9px] font-extrabold border ${
+                      req.selectedPackage === 'Orta'
+                        ? 'bg-amber-50 text-amber-850 border-amber-150'
+                        : req.selectedPackage === 'Profesyonel'
+                          ? 'bg-emerald-50 text-emerald-850 border-emerald-150'
+                          : 'bg-slate-50 text-slate-700 border-slate-150'
+                    }`}>
+                      {req.selectedPackage.toUpperCase()}
+                    </span>
+                  ) : (
+                    <span className="text-[10px] text-gray-400 italic">Belirtilmedi</span>
+                  )}
+                </td>
                 <td className="px-6 py-4 text-xs text-gray-500">{`${new Date(req.createdAt).toLocaleDateString('tr-TR')} ${new Date(req.createdAt).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}`}</td>
                 <td className="px-6 py-4"><StatusBadge status={req.status} /></td>
                 <td className="px-6 py-4">

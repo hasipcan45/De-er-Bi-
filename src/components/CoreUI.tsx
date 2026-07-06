@@ -19,7 +19,7 @@ export function Navbar({ onNavigate, onOpenAuth, user, onLogout }: NavbarProps) 
     setIsMobileMenuOpen(false);
   };
 
-  const handleHakkimizdaClick = () => {
+  const handleKurumsalClick = () => {
     onNavigate('about');
     setIsMobileMenuOpen(false);
   };
@@ -63,8 +63,8 @@ export function Navbar({ onNavigate, onOpenAuth, user, onLogout }: NavbarProps) 
           <button onClick={handleHizmetlerimizClick} className="text-white/80 hover:text-[#f0a500] text-sm font-semibold tracking-wide transition-colors cursor-pointer select-none">
             Hizmetlerimiz
           </button>
-          <button onClick={handleHakkimizdaClick} className="text-white/80 hover:text-[#f0a500] text-sm font-semibold tracking-wide transition-colors cursor-pointer select-none">
-            Hakkımızda
+          <button onClick={handleKurumsalClick} className="text-white/80 hover:text-[#f0a500] text-sm font-semibold tracking-wide transition-colors cursor-pointer select-none">
+            Kurumsal
           </button>
         </div>
    
@@ -139,10 +139,10 @@ export function Navbar({ onNavigate, onOpenAuth, user, onLogout }: NavbarProps) 
               Hizmetlerimiz
             </button>
             <button
-              onClick={handleHakkimizdaClick}
+              onClick={handleKurumsalClick}
               className="w-full text-left text-white/90 hover:text-[#f0a500] text-sm font-bold tracking-wide py-1.5 transition-colors cursor-pointer block"
             >
-              Hakkımızda
+              Kurumsal
             </button>
           </motion.div>
         )}
@@ -201,7 +201,7 @@ export function Hero() {
           transition={{ delay: 0.12, duration: 0.6 }}
           className="hidden md:block text-white/90 text-xs md:text-sm lg:text-base max-w-2xl mx-auto leading-relaxed"
         >
-          <span className="text-[#ffd254] font-semibold">Şehir Plancıları, Mimarlar ve Mühendisler</span> tarafından hazırlanan bağımsız değerleme raporlarıyla doğru karar verin.
+          <span className="text-[#ffd254] font-semibold">Şehir Plancıları, Mimarlar ve Mühendisler</span> tarafından hazırlanan bağımsız analiz raporlarıyla doğru karar verin.
         </motion.p>
       </div>
     </section>

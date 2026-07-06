@@ -6,7 +6,6 @@ import { Profile } from './components/Profile.tsx';
 import { Admin } from './components/Admin.tsx';
 import { AuthModal } from './components/AuthModal.tsx';
 import { ReportFlowModal } from './components/ReportFlowModal.tsx';
-import { SubscriptionPaymentModal } from './components/SubscriptionPaymentModal.tsx';
 import { About } from './components/About.tsx';
 import { Services } from './components/Services.tsx';
 import { UserProfile, AppraisalRequest } from './types.ts';
@@ -19,6 +18,58 @@ import { doc, getDoc, setDoc, collection, query, where, onSnapshot, orderBy, lim
 // Initial empty states
 const INITIAL_USERS: any[] = [];
 const INITIAL_REQUESTS: AppraisalRequest[] = [];
+
+// Helper function to generate unique, sequential report codes
+export const generateReportCode = async (propertyType: string, fullName: string, isRegistered: boolean, userId: string | null, requests: any[]) => {
+  let prefix = 'DBK';
+  if (propertyType === 'arsa') {
+    prefix = 'DBA';
+  } else if (propertyType === 'ticari') {
+    prefix = 'DBT';
+  }
+
+  // Parse initials
+  const rawName = fullName || 'Değer Biç';
+  const parts = rawName.trim().split(/\s+/).filter(Boolean);
+  let initials = 'DB';
+  if (parts.length > 0) {
+    if (parts.length === 1) {
+      initials = (parts[0][0] || 'D').toLocaleUpperCase('tr-TR');
+    } else {
+      const firstLetter = parts[0][0] || 'D';
+      const lastLetter = parts[parts.length - 1][0] || 'B';
+      initials = (firstLetter + lastLetter).toLocaleUpperCase('tr-TR');
+    }
+  }
+
+  const yy = new Date().getFullYear().toString().slice(-2);
+
+  let sequenceNumber = 1;
+  if (isRegistered && userId) {
+    // Registered user: count their own requests of this type
+    const userRequestsOfType = requests.filter(r => r.type === propertyType && r.userId === userId);
+    sequenceNumber = userRequestsOfType.length + 1;
+  } else {
+    // Guest: use a public Firestore counter to ensure collective/global count increment
+    try {
+      const counterRef = doc(db, 'counters', `${propertyType}_guest`);
+      const counterSnap = await getDoc(counterRef);
+      if (counterSnap.exists()) {
+        const currentCount = counterSnap.data().count || 0;
+        sequenceNumber = currentCount + 1;
+      } else {
+        sequenceNumber = 1;
+      }
+    } catch (err) {
+      console.error("Error fetching guest counter:", err);
+      // Fallback
+      sequenceNumber = requests.filter(r => r.type === propertyType && !r.userId).length + 1;
+    }
+  }
+
+  const seqStr = String(sequenceNumber).padStart(4, '0');
+  return `${prefix}-${initials}${yy}-${seqStr}`;
+};
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState('home');
@@ -102,36 +153,7 @@ export default function App() {
   const [requests, setRequests] = useState<AppraisalRequest[]>(INITIAL_REQUESTS);
   const [reportFlowOpen, setReportFlowOpen] = useState(false);
   const [activePropertyData, setActivePropertyData] = useState<any | null>(null);
-  const [upgradeSuccessPlan, setUpgradeSuccessPlan] = useState<string | null>(null);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
-  const [activePaymentPlan, setActivePaymentPlan] = useState<{ planId: string; name: string; price: string; rights: string[] } | null>(null);
-
-  const SUBSCRIPTION_DETAILS = {
-    monthly_pro: {
-      name: 'Aylık Profesyonel Paket',
-      price: '1.949 ₺',
-      rights: [
-        '3 Adet Konut Değerleme Raporu',
-        '2 Adet Arsa / Arazi Değerleme Raporu',
-        '1 Adet Ticari Gayrimenkul Değerleme Raporu'
-      ]
-    },
-    yearly_pro: {
-      name: 'Yıllık Profesyonel Paket',
-      price: '19.449 ₺',
-      rights: [
-        '36 Adet Konut Değerleme Raporu',
-        '24 Adet Arsa / Arazi Değerleme Raporu',
-        '12 Adet Ticari Gayrimenkul Değerleme Raporu'
-      ]
-    }
-  };
-
-  // Subscription Base Quotas
-  const QUOTAS = {
-    monthly_pro: { konut: 3, arsa: 2, ticari: 1 },
-    yearly_pro: { konut: 36, arsa: 24, ticari: 12 }
-  };
 
   const handleSelectPlan = (planId: string) => {
     if (!user) {
@@ -146,75 +168,6 @@ export default function App() {
       }, 150);
       return;
     }
-
-    // Instead of immediately applying, open the Secure Subscription Payment Modal
-    const details = SUBSCRIPTION_DETAILS[planId as keyof typeof SUBSCRIPTION_DETAILS];
-    if (details) {
-      setActivePaymentPlan({
-        planId,
-        name: details.name,
-        price: details.price,
-        rights: details.rights
-      });
-    }
-  };
-
-  const handleSubscriptionPaymentSuccess = (planId: string) => {
-    if (!user) return;
-
-    // Advanced Subscription Merging Logic
-    const isYearly = planId === 'yearly_pro';
-    const targetMembership = isYearly ? 'yearly' : 'monthly';
-    const durationDays = isYearly ? 365 : 30;
-    
-    let remainingQuota = { konut: 0, arsa: 0, ticari: 0 };
-    
-    // Calculate remaining quota if there's an active subscription
-    if (user.activeSubscription && user.activeSubscription.endsAt > Date.now()) {
-      const activeSub = user.activeSubscription;
-      const subReports = requests.filter(r => r.subscriptionId === activeSub.subscriptionId);
-      const subQuota = activeSub.quota || { konut: 0, arsa: 0, ticari: 0 };
-      
-      remainingQuota = {
-        konut: Math.max(0, (subQuota.konut || 0) - subReports.filter(r => r.type === 'konut').length),
-        arsa: Math.max(0, (subQuota.arsa || 0) - subReports.filter(r => r.type === 'arsa').length),
-        ticari: Math.max(0, (subQuota.ticari || 0) - subReports.filter(r => r.type === 'ticari').length)
-      };
-    }
-
-    const baseQuota = QUOTAS[planId as keyof typeof QUOTAS];
-    const newSubscriptionId = `SUB-${Math.random().toString(36).substring(2, 9).toUpperCase()}`;
-    
-    const newSubscription: any = {
-      subscriptionId: newSubscriptionId,
-      planType: targetMembership,
-      startedAt: Date.now(),
-      endsAt: Date.now() + (1000 * 60 * 60 * 24 * durationDays),
-      quota: {
-        konut: (baseQuota?.konut || 0) + remainingQuota.konut,
-        arsa: (baseQuota?.arsa || 0) + remainingQuota.arsa,
-        ticari: (baseQuota?.ticari || 0) + remainingQuota.ticari
-      }
-    };
-
-    // Update user in Firestore
-    const updatedUser: any = { 
-      ...user, 
-      membershipType: targetMembership,
-      activeSubscription: newSubscription,
-      cancelAtPeriodEnd: false,
-      subscriptionExpiresAt: deleteField()
-    };
-
-    // Remove any undefined properties from the user spread to prevent Firestore errors
-    Object.keys(updatedUser).forEach(key => {
-      if (updatedUser[key] === undefined) {
-        delete updatedUser[key];
-      }
-    });
-
-    setDoc(doc(db, 'users', user.id), updatedUser, { merge: true });
-    setUpgradeSuccessPlan(planId === 'monthly_pro' ? 'Aylık Profesyonel Paket' : 'Yıllık Profesyonel Paket');
   };
 
   // Footer Contact Form State
@@ -300,63 +253,62 @@ export default function App() {
     setReportFlowOpen(true);
   };
 
-  const handleFinalSubmitReport = (data: any, isRegistered: boolean, sourceOverride?: 'subscription' | 'singlePurchase') => {
-    // 1. Determine Prefix based on property type (konut -> DBK, arsa -> DBA, ticari -> DBT)
-    let prefix = 'DBK';
-    if (data.type === 'arsa') {
-      prefix = 'DBA';
-    } else if (data.type === 'ticari') {
-      prefix = 'DBT';
+  const handleFinalSubmitReport = async (
+    data: any, 
+    isRegistered: boolean, 
+    sourceOverride?: 'subscription' | 'singlePurchase',
+    selectedPackage?: 'Basit' | 'Orta' | 'Profesyonel',
+    packagePrice?: number,
+    preGeneratedReportId?: string
+  ): Promise<string> => {
+    let reportId = preGeneratedReportId;
+    if (!reportId) {
+      reportId = await generateReportCode(
+        data.type,
+        data.contactName || user?.fullName || 'Değer Biç',
+        isRegistered,
+        user?.id || null,
+        requests
+      );
     }
-
-    // 2. Parse User Initials
-    const rawName = data.contactName || user?.fullName || 'Değer Biç';
-    const parts = rawName.trim().split(/\s+/).filter(Boolean);
-    let initials = 'DB';
-    if (parts.length > 0) {
-      if (parts.length === 1) {
-        initials = (parts[0][0] || 'D').toLocaleUpperCase('tr-TR');
-      } else {
-        const firstLetter = parts[0][0] || 'D';
-        const lastLetter = parts[parts.length - 1][0] || 'B';
-        initials = (firstLetter + lastLetter).toLocaleUpperCase('tr-TR');
-      }
-    }
-
-    // 3. Current year's last two digits
-    const yy = new Date().getFullYear().toString().slice(-2);
-
-    // 4. Calculate sequential 4-digit number
-    const userRequestsOfType = requests.filter(r => r.type === data.type);
-    const sequenceNumber = userRequestsOfType.length + 1;
-    const seqStr = String(sequenceNumber).padStart(4, '0');
-
-    const reportId = `${prefix}-${initials}${yy}-${seqStr}`;
     
     // Determine report source and subscription ID
-    const reportSource = sourceOverride || (user?.activeSubscription ? 'subscription' : 'singlePurchase');
-    const subId = reportSource === 'subscription' ? user?.activeSubscription?.subscriptionId : undefined;
+    const reportSource = sourceOverride || 'singlePurchase';
 
     const newRequest: AppraisalRequest = {
       id: reportId,
       userId: user?.id || null,
-      ...(subId ? { subscriptionId: subId } : {}),
       reportSource: reportSource,
       type: data.type,
       status: 'new',
       createdAt: Date.now(),
       userMembership: user ? user.membershipType : 'guest',
+      selectedPackage: selectedPackage,
+      packagePrice: packagePrice,
       data: data,
       photos: data.images || [],
       contact: { fullName: data.contactName, phone: data.contactPhone, email: data.contactEmail },
       notes: data.notes,
       listingUrl: data.listingUrl,
-      paymentStatus: reportSource === 'singlePurchase' ? 'completed' : 'free',
-      isPaid: reportSource === 'singlePurchase'
+      paymentStatus: 'pending',
+      isPaid: false
     };
 
     // Save to Firestore
-    setDoc(doc(db, 'requests', reportId), newRequest);
+    await setDoc(doc(db, 'requests', reportId), newRequest);
+
+    // If guest, increment the global counter in Firestore
+    if (!isRegistered) {
+      try {
+        const counterRef = doc(db, 'counters', `${data.type}_guest`);
+        const sequenceNumber = parseInt(reportId.split('-').pop() || '0', 10);
+        if (sequenceNumber > 0) {
+          await setDoc(counterRef, { count: sequenceNumber }, { merge: true });
+        }
+      } catch (err) {
+        console.error("Error updating counter on submit:", err);
+      }
+    }
     
     return reportId;
   };
@@ -494,85 +446,6 @@ export default function App() {
         requests={requests}
       />
 
-      <SubscriptionPaymentModal 
-        isOpen={!!activePaymentPlan}
-        onClose={() => setActivePaymentPlan(null)}
-        planId={activePaymentPlan?.planId || ''}
-        planName={activePaymentPlan?.name || ''}
-        price={activePaymentPlan?.price || ''}
-        rights={activePaymentPlan?.rights || []}
-        onPaymentSuccess={handleSubscriptionPaymentSuccess}
-        user={user}
-        onLoginSuccess={(loggedInUser) => {
-          setUser(loggedInUser);
-        }}
-      />
-
-      {/* Membership Upgrade Success Modal */}
-      <AnimatePresence>
-        {upgradeSuccessPlan && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
-            <motion.div 
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-white rounded-3xl p-8 max-w-md w-full border border-gray-100 shadow-2xl relative overflow-hidden text-center"
-            >
-              {/* Decorative grid pattern */}
-              <div className="absolute inset-0 bg-[linear-gradient(to_right,#00000002_1px,transparent_1px),linear-gradient(to_bottom,#00000002_1px,transparent_1px)] bg-[size:16px_16px] pointer-events-none" />
-              
-              <div className="relative z-10 space-y-6">
-                <div className="w-16 h-16 bg-emerald-50 rounded-full flex items-center justify-center text-[#1a5c3a] mx-auto border border-emerald-100">
-                  <CheckCircle2 size={32} className="stroke-[2.5px]" />
-                </div>
-
-                <div className="space-y-2">
-                  <span className="text-[#f0a500] text-xs font-extrabold tracking-widest block">ÖDEME BAŞARILI</span>
-                  <h3 className="text-xl font-bold text-gray-950 tracking-tight">Üyeliğiniz Yükseltildi!</h3>
-                  <p className="text-xs text-gray-500 max-w-sm mx-auto leading-relaxed">
-                    Tebrikler! <strong>{upgradeSuccessPlan}</strong> üyeliğiniz başarıyla aktif hale getirildi. Artık paket kapsamındaki tüm ayrıcalıklı rapor türlerine anında erişebilirsiniz.
-                  </p>
-                </div>
-
-                {/* Simulated subscription details badge */}
-                <div className="bg-gray-50 rounded-2xl p-4 border border-gray-105 divide-y divide-gray-150 text-left text-xs">
-                  <div className="flex justify-between py-2">
-                    <span className="text-gray-500">Üyelik Modu</span>
-                    <span className="font-bold text-[#1a5c3a] uppercase">PRO</span>
-                  </div>
-                  <div className="flex justify-between py-2">
-                    <span className="text-gray-500">Hesap</span>
-                    <span className="font-bold text-gray-900">{user?.fullName}</span>
-                  </div>
-                  <div className="flex justify-between py-2">
-                    <span className="text-gray-500">Durum</span>
-                    <span className="font-bold text-emerald-600 flex items-center gap-1">● Aktif</span>
-                  </div>
-                </div>
-
-                <div className="flex flex-col gap-2 pt-2">
-                  <button 
-                    onClick={() => {
-                      setUpgradeSuccessPlan(null);
-                      setCurrentPage('profile');
-                    }}
-                    className="w-full py-3 bg-[#1a5c3a] text-white hover:bg-[#2d8a58] transition-colors rounded-xl text-xs font-bold shadow-md shadow-emerald-950/10 cursor-pointer"
-                  >
-                    Profilime Git ve Başla
-                  </button>
-                  <button 
-                    onClick={() => setUpgradeSuccessPlan(null)}
-                    className="w-full py-2.5 bg-gray-105 hover:bg-gray-200 text-gray-700 transition-colors rounded-xl text-xs font-bold cursor-pointer"
-                  >
-                    Kapat
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-
       {/* Logout Confirmation Modal */}
       <AnimatePresence>
         {showLogoutConfirm && (
@@ -657,7 +530,7 @@ export default function App() {
               <div className="flex gap-5 md:gap-7 text-white/60">
                 <button onClick={() => handleNavigate('pricing')} className="hover:text-[#f0a500] transition-colors cursor-pointer">Fiyatlandırma</button>
                 <button onClick={() => handleNavigate('services')} className="hover:text-[#f0a500] transition-colors cursor-pointer">Hizmetlerimiz</button>
-                <button onClick={() => handleNavigate('about')} className="hover:text-[#f0a500] transition-colors cursor-pointer">Hakkımızda</button>
+                <button onClick={() => handleNavigate('about')} className="hover:text-[#f0a500] transition-colors cursor-pointer">Kurumsal</button>
               </div>
             </div>
           </div>

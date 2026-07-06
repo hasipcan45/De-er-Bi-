@@ -103,9 +103,9 @@ export function PropertyForm({ onSubmit, isLoggedIn, onNavigateAuth, user }: Pro
     facade: '',
     titleStatus: '',
     titleStatusOther: '',
-    elevator: 'Var',
-    parking: 'Yok',
-    furnished: 'Eşyasız',
+    elevator: '',
+    parking: '',
+    furnished: '',
     notes: '',
     contactName: '',
     contactPhone: '',
@@ -216,6 +216,9 @@ export function PropertyForm({ onSubmit, isLoggedIn, onNavigateAuth, user }: Pro
       heating: '',
       facade: '',
       titleStatus: '',
+      elevator: '',
+      parking: '',
+      furnished: '',
       notes: ''
     }));
   };
@@ -857,6 +860,7 @@ export function PropertyForm({ onSubmit, isLoggedIn, onNavigateAuth, user }: Pro
                         onChange={handleChange}
                         className="w-full bg-gray-50 border border-gray-200 rounded-md px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-[#1a5c3a] cursor-pointer"
                       >
+                        <option value="">Seçin</option>
                         <option value="Var">Var</option>
                         <option value="Yok">Yok</option>
                       </select>
@@ -871,6 +875,7 @@ export function PropertyForm({ onSubmit, isLoggedIn, onNavigateAuth, user }: Pro
                         onChange={handleChange}
                         className="w-full bg-gray-50 border border-gray-200 rounded-md px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-[#1a5c3a] cursor-pointer"
                       >
+                        <option value="">Seçin</option>
                         <option value="Yok">Yok</option>
                         <option value="Var – Açık">Var – Açık</option>
                         <option value="Var – Kapalı">Var – Kapalı</option>
@@ -886,6 +891,7 @@ export function PropertyForm({ onSubmit, isLoggedIn, onNavigateAuth, user }: Pro
                         onChange={handleChange}
                         className="w-full bg-gray-50 border border-gray-200 rounded-md px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-[#1a5c3a] cursor-pointer"
                       >
+                        <option value="">Seçin</option>
                         <option value="Eşyasız">Eşyasız</option>
                         <option value="Eşyalı">Eşyalı</option>
                         <option value="Kısmen eşyalı">Kısmen Eşyalı</option>
@@ -1090,6 +1096,7 @@ export function PropertyForm({ onSubmit, isLoggedIn, onNavigateAuth, user }: Pro
                         onChange={handleChange}
                         className="w-full bg-gray-50 border border-gray-200 rounded-md px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-[#1a5c3a] cursor-pointer"
                       >
+                        <option value="">Seçin</option>
                         <option value="Yok">Yok</option>
                         <option value="Var">Var</option>
                       </select>
@@ -1104,6 +1111,7 @@ export function PropertyForm({ onSubmit, isLoggedIn, onNavigateAuth, user }: Pro
                         onChange={handleChange}
                         className="w-full bg-gray-50 border border-gray-200 rounded-md px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-[#1a5c3a] cursor-pointer"
                       >
+                        <option value="">Seçin</option>
                         <option value="Yok">Yok</option>
                         <option value="Var – Açık">Var – Açık</option>
                         <option value="Var – Kapalı">Var – Kapalı</option>
@@ -1193,7 +1201,7 @@ export function PropertyForm({ onSubmit, isLoggedIn, onNavigateAuth, user }: Pro
                 <textarea 
                   name="notes"
                   maxLength={300}
-                  placeholder="Değerlemede dikkat edilmesini istediğiniz hususlar (Maksimum 300 karakter)..." 
+                  placeholder="Analizde dikkat edilmesini istediğiniz hususlar (Maksimum 300 karakter)..." 
                   value={formData.notes}
                   onChange={handleChange}
                   className="w-full bg-gray-50 border border-gray-200 rounded-md px-3 py-2 text-sm min-h-[80px] focus:outline-none focus:ring-1 focus:ring-[#1a5c3a]"
